@@ -42,6 +42,7 @@ FLOWS = [
     "balboa",
     "blebox",
     "blink",
+    "bluecurrent",
     "bmw_connected_drive",
     "bond",
     "bosch_shc",
