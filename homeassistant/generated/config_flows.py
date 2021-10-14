@@ -37,6 +37,7 @@ FLOWS = [
     "azure_devops",
     "blebox",
     "blink",
+    "bluecurrent",
     "bmw_connected_drive",
     "bond",
     "bosch_shc",

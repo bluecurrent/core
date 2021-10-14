@@ -72,6 +72,7 @@ homeassistant/components/bitcoin/* @fabaff
 homeassistant/components/bizkaibus/* @UgaitzEtxebarria
 homeassistant/components/blebox/* @bbx-a @bbx-jp
 homeassistant/components/blink/* @fronzbot
+homeassistant/components/bluecurrent/* @Floris272
 homeassistant/components/blueprint/* @home-assistant/core
 homeassistant/components/bluesound/* @thrawnarn
 homeassistant/components/bmp280/* @belidzs
