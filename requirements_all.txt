@@ -451,6 +451,9 @@ blinkstick==1.2.0
 # homeassistant.components.bitcoin
 blockchain==1.4.4
 
+# homeassistant.components.bluecurrent
+bluecurrent-api==1.0.1
+
 # homeassistant.components.bluemaestro
 bluemaestro-ble==0.2.1
 
