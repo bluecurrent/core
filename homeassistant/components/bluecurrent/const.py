@@ -9,6 +9,9 @@ LOGGER = logging.getLogger(__package__)
 
 PLATFORMS = ["sensor"]
 
+# temp
+URL = "ws://172.18.228.101:8765"
+
 SENSOR_TYPES = {
     "voltage 1": {
         CONF_NAME: "Voltage 1",
@@ -40,11 +43,11 @@ SENSOR_TYPES = {
         CONF_UNIT_OF_MEASUREMENT: "A",
         CONF_DEVICE_CLASS: "current",
     },
-    "session start": {
-        CONF_NAME: "start time",
-        CONF_UNIT_OF_MEASUREMENT: "Timestamp",
-        CONF_DEVICE_CLASS: "timestamp",
-    },
+    # "session start": {
+    #     CONF_NAME: "start time",
+    #     CONF_UNIT_OF_MEASUREMENT: "Timestamp",
+    #     CONF_DEVICE_CLASS: "timestamp",
+    # },
     # grid
     # total cost
     # session duration
