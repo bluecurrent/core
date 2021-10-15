@@ -18,7 +18,7 @@ from homeassistant.helpers.dispatcher import (
 )
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN, LOGGER, PLATFORMS
+from .const import DOMAIN, LOGGER, PLATFORMS, URL
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
@@ -101,7 +101,7 @@ class Connector:
         self.client.set_on_data(on_data)
 
         # await self.client.connect(token)
-        await self.client.websocket.connect(token, "ws://172.21.27.21:8765")
+        await self.client.websocket.connect(token, URL)
         await self.client.get_charge_points()
 
     async def start_loop(self) -> None:
@@ -139,7 +139,7 @@ class ChargePointEntity(Entity):
         evse_id: str,
     ) -> None:
         """Initialize the sensor."""
-        self._evse_id = evse_id
+        self.evse_id = evse_id
         self._connector = connector
         self._attr_unique_id = f"{evse_id}_{sensor_name}"
         self._attr_name = sensor_name
@@ -156,7 +156,7 @@ class ChargePointEntity(Entity):
         # no idea how the dispatcher gets called but many other integrations use it like this
         self.async_on_remove(
             async_dispatcher_connect(
-                self.hass, f"bluecurrent_data_update_{self._evse_id}", update
+                self.hass, f"bluecurrent_data_update_{self.evse_id}", update
             )
         )
 
