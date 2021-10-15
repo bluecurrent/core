@@ -36,10 +36,9 @@ async def validate_input(data: dict) -> dict[str, Any]:
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Hello World."""
+    """Handle a config flow for Blue Current."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_PUSH
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -57,7 +56,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except WebsocketError:
                 errors["base"] = "cannot_connect"
             except InvalidToken:
-                errors["token"] = "invalid_token"
+                errors["base"] = "invalid_token"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
 
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
