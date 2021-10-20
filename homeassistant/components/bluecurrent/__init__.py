@@ -136,7 +136,7 @@ class ChargePointEntity(Entity):
         evse_id: str,
     ) -> None:
         """Initialize the sensor."""
-        self.evse_id = evse_id
+        self._evse_id = evse_id
         self._connector = connector
         self._attr_unique_id = f"{evse_id}_{sensor_name}"
         self._attr_name = sensor_name
@@ -153,7 +153,7 @@ class ChargePointEntity(Entity):
         # no idea how the dispatcher gets called but many other integrations use it like this
         self.async_on_remove(
             async_dispatcher_connect(
-                self.hass, f"bluecurrent_data_update_{self.evse_id}", update
+                self.hass, f"bluecurrent_data_update_{self._evse_id}", update
             )
         )
 
