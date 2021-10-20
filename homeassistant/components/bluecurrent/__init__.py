@@ -67,7 +67,6 @@ class Connector:
         self, hass: HomeAssistant, config: ConfigEntry, client: Client
     ) -> None:
         """Initialize."""
-        # self._entry_setup_complete = False
         self._config = config
         self._hass = hass
         self.client = client
@@ -99,8 +98,6 @@ class Connector:
                     )
 
         self.client.set_on_data(on_data)
-
-        # await self.client.connect(token)
         await self.client.websocket.connect(token, URL)
         await self.client.get_charge_points()
 
