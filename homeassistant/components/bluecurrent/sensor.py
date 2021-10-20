@@ -14,7 +14,7 @@ from .const import DOMAIN, SENSOR_TYPES
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Set up Ambient PWS sensors based on a config entry."""
+    """Set up Blue Current sensors."""
     prototype = hass.data[DOMAIN][entry.entry_id]
 
     sensor_list = []
@@ -33,7 +33,7 @@ async def async_setup_entry(
 
 
 class PrototypeSensor(ChargePointEntity, SensorEntity):
-    """Define an Ambient sensor."""
+    """Define an Blue Current sensor."""
 
     _attr_should_poll = False
 
@@ -58,7 +58,7 @@ class PrototypeSensor(ChargePointEntity, SensorEntity):
 
     @callback
     def update_from_latest_data(self) -> None:
-        """Fetch new state data for the sensor."""
+        """Update the sensor from the latest data."""
         self._attr_native_value = self._connector.charge_points[self.evse_id][
             self.data_id
         ]
