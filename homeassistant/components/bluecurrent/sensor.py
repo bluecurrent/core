@@ -42,12 +42,12 @@ class BlueCurrentSensor(ChargePointEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(connector, sensor[1][CONF_NAME], evse_id)
 
-        self.data_id = sensor[0]
+        self._data_id = sensor[0]
         self._attr_native_unit_of_measurement = sensor[1][CONF_UNIT_OF_MEASUREMENT]
         self._attr_device_class = sensor[1][CONF_DEVICE_CLASS]
         self._attr_native_value = 0
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, self.evse_id)},
+            "identifiers": {(DOMAIN, self._evse_id)},
             "name": "NanoCharge",
             "manufacturer": "BlueCurrent",
             "model": "v2",
@@ -58,6 +58,6 @@ class BlueCurrentSensor(ChargePointEntity, SensorEntity):
     @callback
     def update_from_latest_data(self) -> None:
         """Update the sensor from the latest data."""
-        self._attr_native_value = self._connector.charge_points[self.evse_id][
-            self.data_id
+        self._attr_native_value = self._connector.charge_points[self._evse_id][
+            self._data_id
         ]
