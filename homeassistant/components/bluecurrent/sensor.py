@@ -15,24 +15,23 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Blue Current sensors."""
-    prototype = hass.data[DOMAIN][entry.entry_id]
+    connector = hass.data[DOMAIN][entry.entry_id]
 
     sensor_list = []
-    for evse_id in prototype.charge_points.keys():
+    for evse_id in connector.charge_points.keys():
         for sensor in SENSOR_TYPES.items():
             sensor_list.append(
-                PrototypeSensor(
-                    prototype,
+                BlueCurrentSensor(
+                    connector,
                     evse_id,
                     sensor,
                 )
             )
 
-    print(len(sensor_list))
     async_add_entities(sensor_list)
 
 
-class PrototypeSensor(ChargePointEntity, SensorEntity):
+class BlueCurrentSensor(ChargePointEntity, SensorEntity):
     """Define an Blue Current sensor."""
 
     _attr_should_poll = False
