@@ -21,7 +21,7 @@ from homeassistant.helpers.entity import Entity
 from .const import DOMAIN, LOGGER, PLATFORMS, URL
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Set up the Ambient PWS as config entry."""
     hass.data.setdefault(DOMAIN, {})
     client = Client()
