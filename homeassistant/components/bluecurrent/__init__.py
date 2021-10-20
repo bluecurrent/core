@@ -22,7 +22,7 @@ from .const import DOMAIN, LOGGER, PLATFORMS, URL
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Set up the Ambient PWS as config entry."""
+    """Set up Blue Current as a config entry."""
     hass.data.setdefault(DOMAIN, {})
     client = Client()
     token = config_entry.data["token"]
@@ -61,7 +61,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 
 class Connector:
-    """Define a class to to connect to the websocket."""
+    """Define a class that connects to the Blue Current websocket API."""
 
     def __init__(
         self, hass: HomeAssistant, config: ConfigEntry, client: Client
@@ -77,7 +77,7 @@ class Connector:
         """Register on_data and connect to the websocket."""
 
         def on_data(data: dict) -> None:
-            """Define a handler to fire when the data is received."""
+            """Define a handler to handle received data."""
             command = data["object"]
             data = data["data"]
 
@@ -114,7 +114,7 @@ class Connector:
                 self._hass,
                 "Connection to the server has been lost. <br> to reconnect reload the integration",
                 title=DOMAIN,
-                notification_id="ws_prototype_notification",
+                notification_id="bluecurrent_notification",
             )
             entity_registry = await er.async_get_registry(self._hass)
             entries = er.async_entries_for_config_entry(
@@ -130,7 +130,7 @@ class Connector:
 
 
 class ChargePointEntity(Entity):
-    """Define a base charge point entity entity."""
+    """Define a base charge point entity."""
 
     def __init__(
         self,
