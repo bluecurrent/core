@@ -17,8 +17,9 @@ from homeassistant.helpers.dispatcher import (
     async_dispatcher_send,
 )
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.event import async_call_later
 
-from .const import DOMAIN, LOGGER, PLATFORMS, URL
+from .const import DELAY, DOMAIN, LOGGER, PLATFORMS, URL
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -58,6 +59,15 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     hass.async_create_task(connector.disconnect())
 
     return await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+
+
+def set_entities_unavalible(hass: HomeAssistant, config_id):
+    """Set all Blue Current entities to unavailable."""
+    entity_registry = er.async_get(hass)
+    entries = er.async_entries_for_config_entry(entity_registry, config_id)
+
+    for entry in entries:
+        entry.write_unavailable_state(hass)
 
 
 class Connector:
@@ -105,20 +115,30 @@ class Connector:
         try:
             await self.client.start_loop()
         except WebsocketError:
-            LOGGER.warning("Disconnected from websocket")
+            LOGGER.warning(
+                "Disconnected from the Blue Current websocket. Trying to connect in 30 seconds"
+            )
+
             persistent_notification.create(
                 self._hass,
-                "Connection to the server has been lost. <br> to reconnect reload the integration",
+                "Connection to the Blue Current websocket has been lost. <br> trying to reconnect in 30 seconds",
                 title=DOMAIN,
                 notification_id="bluecurrent_notification",
             )
-            entity_registry = await er.async_get_registry(self._hass)
-            entries = er.async_entries_for_config_entry(
-                entity_registry, self._config.entry_id
-            )
 
-            for entry in entries:
-                entry.write_unavailable_state(self._hass)
+            set_entities_unavalible(self._hass, self._config.entry_id)
+
+            async_call_later(self._hass, DELAY, self.reconnect)
+
+    async def reconnect(self, timestamp: int | None = None) -> None:
+        """Keep trying to reconnect to the websocket."""
+        try:
+            await self.connect("123")
+            LOGGER.info("Reconnected to the Blue Current websocket")
+            await self.start_loop()
+        except WebsocketError:
+            LOGGER.warning("Reconnect to the Blue Current websocket failed")
+            async_call_later(self._hass, DELAY * 10, self.reconnect)
 
     async def disconnect(self) -> None:
         """Disconnect from the websocket."""
@@ -146,6 +166,10 @@ class ChargePointEntity(Entity):
         @callback
         def update() -> None:
             """Update the state."""
+
+            if not self._attr_available:
+                self._attr_available = True
+
             self.update_from_latest_data()
             self.async_write_ha_state()
 
