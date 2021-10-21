@@ -12,6 +12,8 @@ PLATFORMS = ["sensor"]
 # temp
 URL = "ws://172.19.71.252:8765"
 
+DELAY = 10
+
 
 SENSORS = (
     SensorEntityDescription(
