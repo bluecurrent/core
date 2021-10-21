@@ -1,7 +1,7 @@
 """Constants for the BlueCurrent integration."""
 import logging
 
-from homeassistant.const import CONF_DEVICE_CLASS, CONF_NAME, CONF_UNIT_OF_MEASUREMENT
+from homeassistant.components.sensor import SensorEntityDescription
 
 DOMAIN = "bluecurrent"
 
@@ -10,48 +10,89 @@ LOGGER = logging.getLogger(__package__)
 PLATFORMS = ["sensor"]
 
 # temp
-URL = "ws://172.19.64.172:8765"
+URL = "ws://172.19.71.252:8765"
 
-SENSOR_TYPES = {
-    "voltage 1": {
-        CONF_NAME: "Voltage 1",
-        CONF_UNIT_OF_MEASUREMENT: "V",
-        CONF_DEVICE_CLASS: "voltage",
-    },
-    "voltage 2": {
-        CONF_NAME: "Voltage 2",
-        CONF_UNIT_OF_MEASUREMENT: "V",
-        CONF_DEVICE_CLASS: "voltage",
-    },
-    "voltage 3": {
-        CONF_NAME: "Voltage 3",
-        CONF_UNIT_OF_MEASUREMENT: "V",
-        CONF_DEVICE_CLASS: "voltage",
-    },
-    "current 1": {
-        CONF_NAME: "Current 1",
-        CONF_UNIT_OF_MEASUREMENT: "A",
-        CONF_DEVICE_CLASS: "current",
-    },
-    "current 2": {
-        CONF_NAME: "Current 2",
-        CONF_UNIT_OF_MEASUREMENT: "A",
-        CONF_DEVICE_CLASS: "current",
-    },
-    "current 3": {
-        CONF_NAME: "Current 3",
-        CONF_UNIT_OF_MEASUREMENT: "A",
-        CONF_DEVICE_CLASS: "current",
-    },
-    # "session start": {
-    #     CONF_NAME: "start time",
-    #     CONF_UNIT_OF_MEASUREMENT: "Timestamp",
-    #     CONF_DEVICE_CLASS: "timestamp",
-    # },
-    # grid
-    # total cost
-    # session duration
-    # total V / A ?
-    #     "activity": {CONF_NAME: "activity", CONF_ICON: "mdi:ev-station"},
-    # "vehicle status": {CONF_NAME: "vehicle status", CONF_ICON: "mdi:car"},
-}
+
+SENSORS = (
+    SensorEntityDescription(
+        key="voltage 1",
+        native_unit_of_measurement="V",
+        device_class="voltage",
+        name="Voltage Phase 1",
+    ),
+    SensorEntityDescription(
+        key="voltage 2",
+        native_unit_of_measurement="V",
+        device_class="voltage",
+        name="Voltage Phase 2",
+    ),
+    SensorEntityDescription(
+        key="voltage 3",
+        native_unit_of_measurement="V",
+        device_class="voltage",
+        name="Voltage Phase 3",
+    ),
+    SensorEntityDescription(
+        key="total voltage",
+        native_unit_of_measurement="V",
+        device_class="voltage",
+        name="Total Voltage",
+    ),
+    SensorEntityDescription(
+        key="current 1",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Current Phase 1",
+    ),
+    SensorEntityDescription(
+        key="current 2",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Current Phase 2",
+    ),
+    SensorEntityDescription(
+        key="current 3",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Current Phase 3",
+    ),
+    SensorEntityDescription(
+        key="total current",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Total Current",
+    ),
+    SensorEntityDescription(
+        key="total wh",
+        native_unit_of_measurement="Wh",
+        device_class="energy",
+        name="Energy Usage",
+    ),
+    SensorEntityDescription(
+        key="start date",
+        native_unit_of_measurement="Timestamp",
+        device_class="timestamp",
+        name="Session Start Date",
+    ),
+    SensorEntityDescription(
+        key="stop date",
+        native_unit_of_measurement="Timestamp",
+        device_class="timestamp",
+        name="Session Stop Date",
+    ),
+    SensorEntityDescription(
+        key="offline since",
+        native_unit_of_measurement="Timestamp",
+        device_class="timestamp",
+        name="Offline Since",
+    ),
+    SensorEntityDescription(
+        key="vehicle status", name="Vehicle Status", icon="mdi:car"
+    ),
+    SensorEntityDescription(key="activity", name="Activity", icon="mdi:ev-station"),
+)
+
+
+# grid
+# max usage
+# total cost
