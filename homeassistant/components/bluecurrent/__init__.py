@@ -30,7 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     try:
         await connector.connect(token)
-    except ConnectionError as err:
+    except WebsocketError as err:
         LOGGER.error("Config entry failed: %s", err)
         raise ConfigEntryNotReady from err
 
@@ -83,7 +83,6 @@ class Connector:
             if command == "CHARGE_POINTS":
                 for evse_id in data.keys():
                     self.charge_points[evse_id] = data[evse_id]
-                    print(self.charge_points)
                     async_dispatcher_send(
                         self._hass, f"bluecurrent_data_update_{evse_id}"
                     )
@@ -106,7 +105,7 @@ class Connector:
         try:
             await self.client.start_loop()
         except WebsocketError:
-            LOGGER.error("Disconnected from websocket")
+            LOGGER.warning("Disconnected from websocket")
             persistent_notification.create(
                 self._hass,
                 "Connection to the server has been lost. <br> to reconnect reload the integration",
@@ -132,14 +131,14 @@ class ChargePointEntity(Entity):
     def __init__(
         self,
         connector: Connector,
-        sensor_name: str,
+        name: str,
         evse_id: str,
     ) -> None:
         """Initialize the sensor."""
         self._evse_id = evse_id
         self._connector = connector
-        self._attr_unique_id = f"{evse_id}_{sensor_name}"
-        self._attr_name = sensor_name
+        self._attr_unique_id = f"{evse_id}_{name}"
+        self._attr_name = name
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
