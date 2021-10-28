@@ -17,19 +17,19 @@ DELAY = 10
 
 SENSORS = (
     SensorEntityDescription(
-        key="voltage 1",
+        key="actual_v1",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 1",
     ),
     SensorEntityDescription(
-        key="voltage 2",
+        key="actual_v2",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 2",
     ),
     SensorEntityDescription(
-        key="voltage 3",
+        key="vactual_v3",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 3",
@@ -41,19 +41,19 @@ SENSORS = (
         name="Total Voltage",
     ),
     SensorEntityDescription(
-        key="current 1",
+        key="actual_p1",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 1",
     ),
     SensorEntityDescription(
-        key="current 2",
+        key="cactual_p2",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 2",
     ),
     SensorEntityDescription(
-        key="current 3",
+        key="actual_p3",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 3",
@@ -65,36 +65,60 @@ SENSORS = (
         name="Total Current",
     ),
     SensorEntityDescription(
-        key="total wh",
-        native_unit_of_measurement="Wh",
+        key="actual_kwh",
+        native_unit_of_measurement="kWh",
         device_class="energy",
         name="Energy Usage",
     ),
     SensorEntityDescription(
-        key="start date",
+        key="start_session",
         native_unit_of_measurement="Timestamp",
         device_class="timestamp",
         name="Session Start Date",
     ),
     SensorEntityDescription(
-        key="stop date",
+        key="stop_session",
         native_unit_of_measurement="Timestamp",
         device_class="timestamp",
         name="Session Stop Date",
     ),
     SensorEntityDescription(
-        key="offline since",
+        key="offline_since",
         native_unit_of_measurement="Timestamp",
         device_class="timestamp",
         name="Offline Since",
     ),
     SensorEntityDescription(
-        key="vehicle status", name="Vehicle Status", icon="mdi:car"
+        key="total_cost",
+        native_unit_of_measurement="EUR",
+        device_class="monetary",
+        name="Offline Since",
+    ),
+    SensorEntityDescription(
+        key="vehicle_status", name="Vehicle Status", icon="mdi:car"
     ),
     SensorEntityDescription(key="activity", name="Activity", icon="mdi:ev-station"),
 )
 
+GRID_SENSORS = (
+    SensorEntityDescription(
+        key="actual_p1",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Grid current Phase 1",
+    ),
+    SensorEntityDescription(
+        key="actual_p2",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Grid current Phase 2",
+    ),
+    SensorEntityDescription(
+        key="actual_p3",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Grid current Phase 3",
+    ),
+)
 
-# grid
-# max usage
-# total cost
+# max usage and duration?
