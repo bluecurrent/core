@@ -49,7 +49,7 @@ class BlueCurrentSensor(ChargePointEntity, SensorEntity):
         self._attr_native_value = 0
         self._attr_device_info = {
             "identifiers": {(DOMAIN, evse_id)},
-            "name": "NanoCharge",
+            "name": "NanoCharge " + evse_id,
             "manufacturer": "BlueCurrent",
             "model": "v2",
             "sw_version": "1",
