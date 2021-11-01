@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import ChargePointEntity, Connector
+from . import BlueCurrentEntity, Connector
 from .const import DOMAIN, SENSORS
 
 
@@ -20,7 +20,7 @@ async def async_setup_entry(
     for evse_id in connector.charge_points.keys():
         for sensor in SENSORS:
             sensor_list.append(
-                BlueCurrentSensor(
+                ChargePointSensor(
                     connector,
                     evse_id,
                     sensor,
@@ -30,7 +30,7 @@ async def async_setup_entry(
     async_add_entities(sensor_list)
 
 
-class BlueCurrentSensor(ChargePointEntity, SensorEntity):
+class ChargePointSensor(BlueCurrentEntity, SensorEntity):
     """Define an Blue Current sensor."""
 
     _attr_should_poll = False
@@ -47,14 +47,16 @@ class BlueCurrentSensor(ChargePointEntity, SensorEntity):
         self._attr_device_class = sensor.device_class
         self._attr_icon = sensor.icon
         self._attr_native_value = 0
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, evse_id)},
-            "name": "NanoCharge " + evse_id,
-            "manufacturer": "BlueCurrent",
-            "model": "v2",
-            "sw_version": "1",
-            "via_device": (DOMAIN, "test"),
-        }
+
+        if "Grid" not in sensor.name:
+            self._attr_device_info = {
+                "identifiers": {(DOMAIN, evse_id)},
+                "name": "NanoCharge " + evse_id,
+                "manufacturer": "BlueCurrent",
+                "model": "v2",
+                "sw_version": "1",
+                "via_device": (DOMAIN, "test"),
+            }
 
     @callback
     def update_from_latest_data(self) -> None:
