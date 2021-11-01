@@ -77,9 +77,9 @@ class Connector:
         self, hass: HomeAssistant, config: ConfigEntry, client: Client
     ) -> None:
         """Initialize."""
-        self._config = config
-        self._hass = hass
-        self.client = client
+        self._config: ConfigEntry = config
+        self._hass: HomeAssistant = hass
+        self.client: Client = client
         self.charge_points: dict[str, dict] = {}
 
     async def connect(self, token: str) -> None:
@@ -145,7 +145,7 @@ class Connector:
         await self.client.disconnect()
 
 
-class ChargePointEntity(Entity):
+class BlueCurrentEntity(Entity):
     """Define a base charge point entity."""
 
     def __init__(
@@ -156,9 +156,9 @@ class ChargePointEntity(Entity):
     ) -> None:
         """Initialize the sensor."""
         self._evse_id = evse_id
-        self._connector = connector
+        self._connector: Connector = connector
         self._attr_unique_id = f"{evse_id}_{name}"
-        self._attr_name = name
+        self._attr_name: str = name
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -173,12 +173,14 @@ class ChargePointEntity(Entity):
             self.update_from_latest_data()
             self.async_write_ha_state()
 
+        assert self._attr_name is not None
+        if "Grid" in self._attr_name:
+            signal = "bluecurrent_data_update_grid"
+        else:
+            signal = f"bluecurrent_data_update_{self._evse_id}"
+
         # no idea how the dispatcher gets called but many other integrations use it like this
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, f"bluecurrent_data_update_{self._evse_id}", update
-            )
-        )
+        self.async_on_remove(async_dispatcher_connect(self.hass, signal, update))
 
         self.update_from_latest_data()
 
