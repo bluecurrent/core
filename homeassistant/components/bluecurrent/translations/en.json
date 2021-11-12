@@ -12,7 +12,9 @@
             "user": {
                 "data": {
                     "token": "Token"
-                }
+                },
+                "description": "Enter your Blue Current api token",
+                "title": "Authentication"
             }
         }
     }
