@@ -15,7 +15,6 @@ async def async_setup_entry(
 ) -> None:
     """Set up Blue Current sensors."""
     connector = hass.data[DOMAIN][entry.entry_id]
-
     sensor_list = []
     for evse_id in connector.charge_points.keys():
         for sensor in SENSORS:
@@ -46,23 +45,17 @@ class ChargePointSensor(BlueCurrentEntity, SensorEntity):
         self._attr_native_unit_of_measurement = sensor.native_unit_of_measurement
         self._attr_device_class = sensor.device_class
         self._attr_icon = sensor.icon
-        self._attr_native_value = 0
-
-        if "Grid" not in sensor.name:
-            self._attr_device_info = {
-                "identifiers": {(DOMAIN, evse_id)},
-                "name": "NanoCharge " + evse_id,
-                "manufacturer": "BlueCurrent",
-                "model": "v2",
-                "sw_version": "1",
-                "via_device": (DOMAIN, "test"),
-            }
+        self._attr_unique_id = f"{sensor.key}_{evse_id}"
+        self._attr_native_value = 0  # maybe not needed
+        self.entity_id = f"sensor.{sensor.key}_{evse_id}"
 
     @callback
     def update_from_latest_data(self) -> None:
         """Update the sensor from the latest data."""
 
-        if self._key in self._connector.charge_points[self._evse_id]:
-            self._attr_native_value = self._connector.charge_points[self._evse_id][
-                self._key
-            ]
+        new_value = self._connector.charge_points[self._evse_id].get(self._key)
+        if new_value is not None:
+            self._attr_available = True
+            self._attr_native_value = new_value
+        else:
+            self._attr_available = False

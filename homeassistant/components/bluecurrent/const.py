@@ -9,8 +9,12 @@ LOGGER = logging.getLogger(__package__)
 
 PLATFORMS = ["sensor"]
 
+EVSE_ID = "evse_id"
+
+DATA = "data"
+
 # temp
-URL = "ws://172.19.71.252:8765"
+URL = "ws://172.21.185.83:8765"
 
 DELAY = 10
 
@@ -29,7 +33,7 @@ SENSORS = (
         name="Voltage Phase 2",
     ),
     SensorEntityDescription(
-        key="vactual_v3",
+        key="actual_v3",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 3",
@@ -47,7 +51,7 @@ SENSORS = (
         name="Current Phase 1",
     ),
     SensorEntityDescription(
-        key="cactual_p2",
+        key="actual_p2",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 2",
@@ -70,35 +74,42 @@ SENSORS = (
         device_class="energy",
         name="Energy Usage",
     ),
-    SensorEntityDescription(
-        key="start_session",
-        native_unit_of_measurement="Timestamp",
-        device_class="timestamp",
-        name="Session Start Date",
-    ),
-    SensorEntityDescription(
-        key="stop_session",
-        native_unit_of_measurement="Timestamp",
-        device_class="timestamp",
-        name="Session Stop Date",
-    ),
-    SensorEntityDescription(
-        key="offline_since",
-        native_unit_of_measurement="Timestamp",
-        device_class="timestamp",
-        name="Offline Since",
-    ),
+    # SensorEntityDescription(
+    #     key="start_datetime",
+    #     native_unit_of_measurement="Timestamp",
+    #     device_class="timestamp",
+    #     name="Session Start Date",
+    # ),
+    # SensorEntityDescription(
+    #     key="stop_datetime",
+    #     native_unit_of_measurement="Timestamp",
+    #     device_class="timestamp",
+    #     name="Session Stop Date",
+    # ),
+    # SensorEntityDescription(
+    #     key="ch_offline_since",
+    #     native_unit_of_measurement="Timestamp",
+    #     device_class="timestamp",
+    #     name="Offline Since",
+    # ),
     SensorEntityDescription(
         key="total_cost",
         native_unit_of_measurement="EUR",
         device_class="monetary",
-        name="Offline Since",
+        name="Total cost",
     ),
     SensorEntityDescription(
-        key="vehicle_status", name="Vehicle Status", icon="mdi:car"
+        key="vehicle_status",
+        name="Vehicle Status",
+        icon="mdi:car",
     ),
-    SensorEntityDescription(key="activity", name="Activity", icon="mdi:ev-station"),
+    SensorEntityDescription(
+        key="activity",
+        name="Activity",
+        icon="mdi:ev-station",
+    ),
 )
+# duration?
 
 GRID_SENSORS = (
     SensorEntityDescription(
@@ -120,5 +131,3 @@ GRID_SENSORS = (
         name="Grid current Phase 3",
     ),
 )
-
-# max usage and duration?
