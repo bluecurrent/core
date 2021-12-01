@@ -44,6 +44,7 @@ homeassistant.components.ampio.*
 homeassistant.components.aseko_pool_live.*
 homeassistant.components.automation.*
 homeassistant.components.binary_sensor.*
+homeassistant.components.bluecurrent.*
 homeassistant.components.bluetooth_tracker.*
 homeassistant.components.bmw_connected_drive.*
 homeassistant.components.bond.*
