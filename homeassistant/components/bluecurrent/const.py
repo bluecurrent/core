@@ -7,14 +7,18 @@ DOMAIN = "bluecurrent"
 
 LOGGER = logging.getLogger(__package__)
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["sensor", "switch", "button"]
+
+KEY = "key"
+
+CARD = "card"
 
 EVSE_ID = "evse_id"
 
 DATA = "data"
 
 # temp
-URL = "ws://172.21.185.83:8765"
+URL = "ws://192.168.145.124:8765"
 
 DELAY = 10
 
@@ -39,7 +43,7 @@ SENSORS = (
         name="Voltage Phase 3",
     ),
     SensorEntityDescription(
-        key="total voltage",
+        key="total_voltage",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Total Voltage",
@@ -63,7 +67,7 @@ SENSORS = (
         name="Current Phase 3",
     ),
     SensorEntityDescription(
-        key="total current",
+        key="total_current",
         native_unit_of_measurement="A",
         device_class="current",
         name="Total Current",
@@ -73,25 +77,26 @@ SENSORS = (
         native_unit_of_measurement="kWh",
         device_class="energy",
         name="Energy Usage",
+        # state_class="measurement",
     ),
-    # SensorEntityDescription(
-    #     key="start_datetime",
-    #     native_unit_of_measurement="Timestamp",
-    #     device_class="timestamp",
-    #     name="Session Start Date",
-    # ),
-    # SensorEntityDescription(
-    #     key="stop_datetime",
-    #     native_unit_of_measurement="Timestamp",
-    #     device_class="timestamp",
-    #     name="Session Stop Date",
-    # ),
-    # SensorEntityDescription(
-    #     key="ch_offline_since",
-    #     native_unit_of_measurement="Timestamp",
-    #     device_class="timestamp",
-    #     name="Offline Since",
-    # ),
+    SensorEntityDescription(
+        key="start_session",
+        native_unit_of_measurement="Timestamp",
+        device_class="timestamp",
+        name="Session Start Date",
+    ),
+    SensorEntityDescription(
+        key="stop_session",
+        native_unit_of_measurement="Timestamp",
+        device_class="timestamp",
+        name="Session Stop Date",
+    ),
+    SensorEntityDescription(
+        key="offline_since",
+        native_unit_of_measurement="Timestamp",
+        device_class="timestamp",
+        name="Offline Since",
+    ),
     SensorEntityDescription(
         key="total_cost",
         native_unit_of_measurement="EUR",
@@ -102,32 +107,40 @@ SENSORS = (
         key="vehicle_status",
         name="Vehicle Status",
         icon="mdi:car",
+        device_class="bluecurrent__vehicle_status",
     ),
     SensorEntityDescription(
         key="activity",
         name="Activity",
         icon="mdi:ev-station",
+        device_class="bluecurrent__activity",
     ),
 )
 # duration?
 
 GRID_SENSORS = (
     SensorEntityDescription(
-        key="actual_p1",
+        key="grid_actual_p1",
         native_unit_of_measurement="A",
         device_class="current",
-        name="Grid current Phase 1",
+        name="Grid Current Phase 1",
     ),
     SensorEntityDescription(
-        key="actual_p2",
+        key="grid_actual_p2",
         native_unit_of_measurement="A",
         device_class="current",
-        name="Grid current Phase 2",
+        name="Grid Current Phase 2",
     ),
     SensorEntityDescription(
-        key="actual_p3",
+        key="grid_actual_p3",
         native_unit_of_measurement="A",
         device_class="current",
-        name="Grid current Phase 3",
+        name="Grid Current Phase 3",
+    ),
+    SensorEntityDescription(
+        key="grid_total_current",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Total Grid Current",
     ),
 )
