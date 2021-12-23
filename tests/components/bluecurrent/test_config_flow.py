@@ -159,7 +159,7 @@ async def test_form_cannot_connect(hass: HomeAssistant) -> None:
     assert result2["errors"] == {"base": "cannot_connect"}
 
 
-async def test_validate_input(hass: HomeAssistant):
+async def test_validate_input():
     """Test the valildate input function."""
 
     with pytest.raises(InvalidToken):

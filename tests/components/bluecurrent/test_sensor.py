@@ -6,6 +6,7 @@ from homeassistant.components.bluecurrent import Connector
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+import homeassistant.util.dt as dt_util
 
 from . import init_integration
 
@@ -24,9 +25,15 @@ charge_point = {
     "actual_p2": 14,
     "actual_p3": 15,
     "activity": "available",
-    "start_session": datetime.strptime("2021-11-18T14:12:23", "%Y-%m-%dT%H:%M:%S"),
-    "stop_session": datetime.strptime("2021-11-18T14:32:23", "%Y-%m-%dT%H:%M:%S"),
-    "offline_since": datetime.strptime("2021-11-18T14:32:23", "%Y-%m-%dT%H:%M:%S"),
+    "start_session": datetime.strptime(
+        "2021-11-18T14:12:23+01:00", "%Y-%m-%dT%H:%M:%S%z"
+    ),
+    "stop_session": datetime.strptime(
+        "2021-11-18T14:32:23+01:00", "%Y-%m-%dT%H:%M:%S%z"
+    ),
+    "offline_since": datetime.strptime(
+        "2021-11-18T14:32:23+01:00", "%Y-%m-%dT%H:%M:%S%z"
+    ),
     "total_cost": 13.32,
     "total_current": 54,
     "total_voltage": 34,
@@ -42,9 +49,24 @@ grid = {
 }
 
 
+def fix_timestamps():
+    """Change the timestamp to the expected result."""
+    charge_point["start_session"] = str(
+        dt_util.as_local(charge_point["start_session"])
+    ).replace(" ", "T")
+    charge_point["stop_session"] = str(
+        dt_util.as_local(charge_point["stop_session"])
+    ).replace(" ", "T")
+    charge_point["offline_since"] = str(
+        dt_util.as_local(charge_point["offline_since"])
+    ).replace(" ", "T")
+
+
 async def test_sensors(hass: HomeAssistant):
     """Test the underlying sensors."""
     await init_integration(hass, "sensor", data, charge_point, grid)
+
+    fix_timestamps()
 
     entity_registry = er.async_get(hass)
     for key in charge_point:
@@ -77,7 +99,7 @@ async def test_sensor_update(hass: HomeAssistant):
     # charge_points get reset but that doesn't matter for this test.
     connector.charge_points = {"101": {key: 20}}
     connector.grid = {grid_key: 20}
-    async_dispatcher_send(hass, "bluecurrent_status_update_101")
+    async_dispatcher_send(hass, "bluecurrent_value_update_101")
     async_dispatcher_send(hass, "bluecurrent_grid_update")
 
     # wait

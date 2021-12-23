@@ -1,7 +1,11 @@
 """Constants for the BlueCurrent integration."""
 import logging
 
+from bluecurrent_api import Client
+
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.const import CONF_ICON, CONF_NAME, CONF_SERVICE
 
 DOMAIN = "bluecurrent"
 
@@ -16,9 +20,27 @@ CARD = "card"
 EVSE_ID = "evse_id"
 
 DATA = "data"
+RESULT = "result"
+
+MODEL_TYPE = "model_type"
+OBJECT = "object"
+SUCCESS = "success"
+ERROR = "error"
+FUNCTION = "function"
+
+CHARGE_POINTS = "CHARGE_POINTS"
+GRID_STATUS = "GRID_STATUS"
+VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
+SERVICES = ("SOFT_RESET", "REBOOT")
+SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
+
+AVAILABLE = "available"
+UNAVAILABLE = "unavailable"
+ACTIVITY = "activity"
+TIMESTAMP_KEYS = ("start_session", "stop_session", "offline_since")
 
 # temp
-URL = "ws://192.168.145.124:8765"
+URL = "ws://172.21.109.125:8765"
 
 DELAY = 10
 
@@ -116,7 +138,6 @@ SENSORS = (
         device_class="bluecurrent__activity",
     ),
 )
-# duration?
 
 GRID_SENSORS = (
     SensorEntityDescription(
@@ -143,4 +164,63 @@ GRID_SENSORS = (
         device_class="current",
         name="Total Grid Current",
     ),
+)
+
+BUTTONS = (
+    {
+        CONF_SERVICE: "get_status",
+        CONF_NAME: "Get status",
+        CONF_ICON: "mdi:database-arrow-down",
+    },
+    {
+        CONF_SERVICE: "reset",
+        CONF_NAME: "Reset",
+        CONF_ICON: "mdi:restart",
+    },
+    {
+        CONF_SERVICE: "reboot",
+        CONF_NAME: "Reboot",
+        CONF_ICON: "mdi:restart-alert",
+    },
+    {
+        CONF_SERVICE: "start_session",
+        CONF_NAME: "Start session",
+        CONF_ICON: "mdi:play",
+    },
+    {
+        CONF_SERVICE: "stop_session",
+        CONF_NAME: "Stop session",
+        CONF_ICON: "mdi:stop",
+    },
+)
+BUTTONS2 = (
+    ButtonEntityDescription(
+        key="get_status", name="Get status", icon="mdi:database-arrow-down"
+    ),
+    ButtonEntityDescription(key="reset", name="Get Reset", icon="mdi:restart"),
+    ButtonEntityDescription(key="reboot", name="Reboot", icon="mdi:restart-alert"),
+    ButtonEntityDescription(key="start_session", name="Start session", icon="mdi:play"),
+    ButtonEntityDescription(key="stop_session", name="Stop session", icon="mdi:stop"),
+)
+
+
+SWITCHES = (
+    {
+        KEY: "plug_and_charge",
+        FUNCTION: Client.set_plug_and_charge,
+        CONF_NAME: "Plug and charge",
+        CONF_ICON: "mdi:ev-plug-type2",
+    },
+    {
+        KEY: "public_charging",
+        FUNCTION: Client.set_public_charging,
+        CONF_NAME: "Public charging",
+        CONF_ICON: "mdi:account-group",
+    },
+    {
+        KEY: "available",
+        FUNCTION: Client.set_available,
+        CONF_NAME: "Available",
+        CONF_ICON: "mdi:power",
+    },
 )
