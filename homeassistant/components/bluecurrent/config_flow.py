@@ -9,7 +9,7 @@ from bluecurrent_api.errors import InvalidToken, WebsocketError
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_TOKEN
+from homeassistant.const import CONF_NAME, CONF_TOKEN
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import CARD, DOMAIN, URL
@@ -88,15 +88,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Handle the card step."""
 
-        token = self.input["token"]
+        token = self.input[CONF_TOKEN]
 
         cards = await get_charge_cards(token)
-        card_names = [card["name"] for card in cards]
+        card_names = [card[CONF_NAME] for card in cards]
         card_schema = vol.Schema({vol.Required(CARD): vol.In(card_names)})
 
         def check_card(card: dict) -> bool:
             assert user_input is not None
-            return bool(card["name"] == user_input["card"])
+            return bool(card[CONF_NAME] == user_input[CARD])
 
         if user_input is not None:
 
@@ -105,7 +105,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.input[CARD] = selected_card
             return self.async_create_entry(title=token[:5], data=self.input)
 
-        return self.async_show_form(step_id="card", data_schema=card_schema, errors={})
+        return self.async_show_form(step_id=CARD, data_schema=card_schema, errors={})
 
     async def async_step_import(
         self, user_input: dict[str, Any] | None = None

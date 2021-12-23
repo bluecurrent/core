@@ -8,9 +8,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+import homeassistant.util.dt as dt_util
 
 from . import BlueCurrentEntity, Connector
-from .const import DOMAIN, GRID_SENSORS, SENSORS
+from .const import DOMAIN, GRID_SENSORS, SENSORS, TIMESTAMP_KEYS
 
 
 async def async_setup_entry(
@@ -40,7 +41,7 @@ async def async_setup_entry(
 
 
 class ChargePointSensor(BlueCurrentEntity, SensorEntity):
-    """Define an Blue Current sensor."""
+    """Base charge point sensor."""
 
     _attr_should_poll = False
 
@@ -65,6 +66,8 @@ class ChargePointSensor(BlueCurrentEntity, SensorEntity):
 
         new_value = self._connector.charge_points[self._evse_id].get(self._key)
         if new_value is not None:
+            if self._key in TIMESTAMP_KEYS:
+                new_value = dt_util.as_local(new_value)
             self._attr_available = True
             self._attr_native_value = new_value
         else:
@@ -72,7 +75,7 @@ class ChargePointSensor(BlueCurrentEntity, SensorEntity):
 
 
 class GridSensor(SensorEntity):
-    """Define an Blue Current sensor."""
+    """Base grid sensor."""
 
     _attr_should_poll = False
 
@@ -96,9 +99,9 @@ class GridSensor(SensorEntity):
             self.update_from_latest_data()
             self.async_write_ha_state()
 
-        signal = "bluecurrent_grid_update"
-
-        self.async_on_remove(async_dispatcher_connect(self.hass, signal, update))
+        self.async_on_remove(
+            async_dispatcher_connect(self.hass, "bluecurrent_grid_update", update)
+        )
 
         self.update_from_latest_data()
 

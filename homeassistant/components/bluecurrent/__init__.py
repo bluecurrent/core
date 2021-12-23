@@ -20,11 +20,33 @@ from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
     async_dispatcher_send,
 )
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 
-from .const import CARD, DATA, DELAY, DOMAIN, EVSE_ID, LOGGER, PLATFORMS, URL
+from .const import (
+    ACTIVITY,
+    AVAILABLE,
+    CARD,
+    CHARGE_POINTS,
+    DATA,
+    DELAY,
+    DOMAIN,
+    ERROR,
+    EVSE_ID,
+    GRID_STATUS,
+    LOGGER,
+    MODEL_TYPE,
+    OBJECT,
+    PLATFORMS,
+    RESULT,
+    SERVICES,
+    SETTINGS,
+    SUCCESS,
+    UNAVAILABLE,
+    URL,
+    VALUE_TYPES,
+)
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -40,7 +62,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Netatmo component."""
+    """Set up the BlueCurrent component."""
     conf = config.get(DOMAIN)
 
     if conf is not None:
@@ -57,9 +79,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     """Set up Blue Current as a config entry."""
     hass.data.setdefault(DOMAIN, {})
     client = Client()
-    token = config_entry.data["token"]
+    token = config_entry.data[CONF_TOKEN]
     connector = Connector(hass, config_entry, client)
-
     try:
         await connector.connect(token)
     except WebsocketError as err:
@@ -119,61 +140,117 @@ class Connector:
         self._hass: HomeAssistant = hass
         self.client: Client = client
 
+    async def connect(self, token: str) -> None:
+        """Register on_data and connect to the websocket."""
+        self.client.set_on_data(self.on_data)
+        await self.client.connect(token, URL)
+        await self.client.get_charge_points()
+
+    async def on_data(self, message: dict) -> None:
+        """Define a handler to handle received data."""
+
+        async def handle_charge_points(data: list) -> None:
+            """Loop over the charge points and get their data."""
+            for entry in data:
+                evse_id = entry[EVSE_ID]
+                model = entry[MODEL_TYPE]
+                self.add_charge_point(evse_id, model)
+                await self.get_charge_point_data(evse_id)
+            await self.client.get_grid_status(data[0][EVSE_ID])
+
+        if ERROR in message:
+            LOGGER.error(message[ERROR])
+            return
+
+        object_name: str = message[OBJECT]
+
+        if DATA in message:
+            data: dict | list = message[DATA]
+
+        # gets charge point ids
+        if object_name == CHARGE_POINTS:
+            assert isinstance(data, list)
+            await handle_charge_points(data)
+
+        # gets charge point key / values
+        elif object_name in VALUE_TYPES:
+            assert isinstance(data, dict)
+            evse_id = data.pop(EVSE_ID)
+            self.update_charge_point(evse_id, data)
+
+        # gets grid key / values
+        elif object_name == GRID_STATUS:
+            assert isinstance(data, dict)
+            self.grid = data
+            self.dispatch_signal()
+
+        # setting change responses
+        elif object_name in SETTINGS:
+            evse_id = message.pop(EVSE_ID)
+            key = object_name.lower()
+            result = message[RESULT]
+            new_data = {key: result}
+            self.update_charge_point(evse_id, new_data)
+
+            # success
+
+        # service responses
+        elif object_name in SERVICES:
+            success: bool = message[SUCCESS]
+            self.handle_success(success, object_name)
+
+        # unknown commands
+        else:
+            print("UNKNOWN", message)
+
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of the charge point."""
         await self.client.get_status(evse_id)
+        await self.client.get_settings(evse_id)
 
-    async def connect(self, token: str) -> None:
-        """Register on_data and connect to the websocket."""
+    def add_charge_point(self, evse_id: str, model: str) -> None:
+        """Add a charge point to the dictionary."""
+        self.charge_points[evse_id] = {MODEL_TYPE: model}
 
-        def update_charge_point(evse_id: str, data: dict) -> None:
-            if evse_id not in self.charge_points:
-                self.charge_points[evse_id] = data
+    def update_charge_point(self, evse_id: str, data: dict) -> None:
+        """Update the charge point data."""
+
+        def handle_activity(data: dict) -> None:
+            activity = data.get(ACTIVITY)
+            if activity == AVAILABLE:
+                data[AVAILABLE] = True
             else:
-                for key in data:
-                    self.charge_points[evse_id][key] = data[key]
+                data[AVAILABLE] = False
 
-        async def on_data(message: dict) -> None:
-            """Define a handler to handle received data."""
-            command = message["object"]
-            data = message[DATA]
-
-            async def handle_charge_point(evse_id: str, entry: dict) -> None:
-                data = {"model_type": entry["model_type"]}
-                update_charge_point(evse_id, data)
-                await self.get_charge_point_data(evse_id)
-
-            def handle_status(evse_id: str, data: dict) -> None:
-                update_charge_point(evse_id, data)
-                async_dispatcher_send(
-                    self._hass, f"bluecurrent_status_update_{evse_id}"
-                )
-
-            def handle_grid(evse_id: str, data: dict) -> None:
-                update_charge_point(evse_id, data)
-                async_dispatcher_send(self._hass, "bluecurrent_grid_update")
-
-            if command == "CHARGE_POINTS":
-                for entry in data:
-                    evse_id = entry[EVSE_ID]
-                    await handle_charge_point(evse_id, entry)
-                await self.client.get_grid_status(data[1][EVSE_ID])
-
-            elif command == "STATUS":
-                evse_id = data[EVSE_ID]
-                handle_status(evse_id, data)
-
-            elif command == "GRID":
-                print("grid")
-                evse_id = data[EVSE_ID]
-                handle_grid(evse_id, data)
+        def handle_available(data: dict) -> None:
+            available = data.get(AVAILABLE)
+            if available:
+                data[ACTIVITY] = AVAILABLE
 
             else:
-                print(message)
+                data[ACTIVITY] = UNAVAILABLE
 
-        self.client.set_on_data(on_data)
-        await self.client.connect(token, URL)
-        await self.client.get_charge_points()
+        if AVAILABLE in data:
+            handle_available(data)
+        elif ACTIVITY in data:
+            handle_activity(data)
+        for key in data:
+            self.charge_points[evse_id][key] = data[key]
+        self.dispatch_signal(evse_id)
+
+    def handle_success(self, success: bool, object_name: str) -> None:
+        """Log a message based on success."""
+        if success:
+            LOGGER.info(object_name, "success")
+        else:
+            LOGGER.warning(object_name, "unsuccessful")
+
+    def dispatch_signal(self, evse_id: str | None = None) -> None:
+        """Dispatch a signal."""
+        if evse_id is not None:
+            async_dispatcher_send(self._hass, f"bluecurrent_value_update_{evse_id}")
+        else:
+            async_dispatcher_send(self._hass, "bluecurrent_grid_update")
 
     async def start_loop(self) -> None:
         """Start the receive loop."""
@@ -199,7 +276,7 @@ class Connector:
     async def reconnect(self, timestamp: int | None = None) -> None:
         """Keep trying to reconnect to the websocket."""
         try:
-            await self.connect(self._config.data["token"])
+            await self.connect(self._config.data[CONF_TOKEN])
             LOGGER.info("Reconnected to the Blue Current websocket")
             await self.start_loop()
             await self.client.get_charge_points()
@@ -233,12 +310,12 @@ class BlueCurrentEntity(Entity):
         self._connector: Connector = connector
         self._attr_name: str = name
 
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, evse_id)},
-            "name": "NanoCharge " + evse_id,
-            "manufacturer": "BlueCurrent",
-            "model": connector.charge_points[evse_id]["model_type"],
-        }
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, evse_id)},
+            name=f"{connector.charge_points[evse_id][MODEL_TYPE]} {evse_id}",
+            manufacturer="BlueCurrent",
+            model=connector.charge_points[evse_id][MODEL_TYPE],
+        )
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -249,8 +326,11 @@ class BlueCurrentEntity(Entity):
             self.update_from_latest_data()
             self.async_write_ha_state()
 
-        signal = f"bluecurrent_status_update_{self._evse_id}"
-        self.async_on_remove(async_dispatcher_connect(self.hass, signal, update))
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self.hass, f"bluecurrent_value_update_{self._evse_id}", update
+            )
+        )
 
         self.update_from_latest_data()
 
