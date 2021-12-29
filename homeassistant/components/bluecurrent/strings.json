@@ -3,18 +3,10 @@
     "step": {
       "user": {
         "data": {
-          "token": "Token",
-          "add_card": "Do you want to use your own charge card?"
+          "token": "Token"
         },
         "description": "Enter your Blue Current api token",
         "title": "Authentication"
-      },
-      "card": {
-        "data": {
-          "card": "Card"
-        },
-        "description": "Enter the name of your charge card",
-        "title": "Card"
       }
     },
     "error": {

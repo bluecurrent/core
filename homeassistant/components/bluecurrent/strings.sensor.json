@@ -1,0 +1,19 @@
+{
+    "state": {
+      "bluecurrent__activity": {
+        "available": "Available",
+        "charging": "Charging",
+        "unavailable": "Unavailable",
+        "error": "Error",
+        "offline": "Offline"
+      },
+      "bluecurrent__vehicle_status": {
+        "standby": "Standby",
+        "vehicle_detected": "Detected",
+        "ready": "Ready",
+        "with_ventilation": "Has ventilation",
+        "no_power": "No power",
+        "vehicle_error": "Error"
+      }
+    }
+  }
