@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+from bluecurrent_api.client import Client
 from bluecurrent_api.errors import WebsocketError
 import pytest
 
@@ -11,12 +12,14 @@ from homeassistant.components.bluecurrent import (
     Connector,
     async_setup,
     async_setup_entry,
+    set_entities_unavalible,
 )
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from tests.common import MockConfigEntry
+from tests.components.bluecurrent import init_integration
 
 
 async def test_load_and_unload_entry(hass: HomeAssistant):
@@ -67,6 +70,35 @@ async def test_async_setup(hass: HomeAssistant):
     assert result is True
 
 
+async def test_set_entities_unavalible(hass: HomeAssistant):
+    """Tests set_entities_unavailable."""
+
+    data = {
+        "101": {
+            "model_type": "hidden",
+            "evse_id": "101",
+        }
+    }
+
+    charge_point = {
+        "actual_v1": 14,
+        "actual_v2": 18,
+        "actual_v3": 15,
+        "actual_p1": 19,
+        "actual_p2": 14,
+        "actual_p3": 15,
+    }
+
+    await init_integration(hass, "sensor", data, charge_point)
+
+    set_entities_unavalible(hass, "uuid")
+    state = hass.states.get("sensor.actual_v1_101")
+
+    for key in charge_point:
+        state = hass.states.get(f"sensor.{key}_101")
+        assert state.state == "unavailable"
+
+
 async def test_on_data(hass: HomeAssistant):
     """Test on_data."""
 
@@ -86,8 +118,6 @@ async def test_on_data(hass: HomeAssistant):
     ), patch(
         "homeassistant.components.bluecurrent.Connector.dispatch_signal"
     ) as test_dispatch, patch(
-        "homeassistant.components.bluecurrent.Connector.handle_success"
-    ) as handle_success, patch(
         "homeassistant.components.bluecurrent.Connector.get_charge_point_data",
         return_value={True},
     ), patch.object(
@@ -151,7 +181,6 @@ async def test_on_data(hass: HomeAssistant):
                 "total_cost": 10.52,
                 "vehicle_status": "A",
                 "actual_kwh": 10,
-                "available": False,
             }
         }
 
@@ -172,81 +201,54 @@ async def test_on_data(hass: HomeAssistant):
             "grid_actual_p2": 14,
             "grid_actual_p3": 15,
         }
-        test_dispatch.assert_called_with()
-
-        # reset charge_point
-        connector.charge_points["101"] = {}
-
-        # test CH_SETTINGS
-        data = {
-            "object": "CH_SETTINGS",
-            "data": {
-                "available": False,
-                "plug_and_charge": False,
-                "public_charging": False,
-                "evse_id": "101",
-            },
-        }
-        await connector.on_data(data)
-        assert connector.charge_points == {
-            "101": {
-                "available": False,
-                "plug_and_charge": False,
-                "public_charging": False,
-                "activity": "unavailable",
-            }
-        }
-        test_dispatch.assert_called_with("101")
-
-        # test PUBLIC_CHARGING
-        data = {"object": "PUBLIC_CHARGING", "result": True, "evse_id": "101"}
-        await connector.on_data(data)
-        assert connector.charge_points == {
-            "101": {
-                "available": False,
-                "plug_and_charge": False,
-                "public_charging": True,
-                "activity": "unavailable",
-            }
-        }
-        test_dispatch.assert_called_with("101")
-
-        # test AVAILABLE
-        data = {"object": "AVAILABLE", "result": True, "evse_id": "101"}
-        await connector.on_data(data)
-        assert connector.charge_points == {
-            "101": {
-                "available": True,
-                "plug_and_charge": False,
-                "public_charging": True,
-                "activity": "available",
-            }
-        }
-        test_dispatch.assert_called_with("101")
-
-        # test PLUG_AND_CHARGE
-        data = {"object": "PLUG_AND_CHARGE", "result": True, "evse_id": "101"}
-        await connector.on_data(data)
-        assert connector.charge_points == {
-            "101": {
-                "available": True,
-                "plug_and_charge": True,
-                "public_charging": True,
-                "activity": "available",
-            }
-        }
-        test_dispatch.assert_called_with("101")
-
-        # test SOFT_RESET
-        data = {"object": "SOFT_RESET", "success": True}
-        await connector.on_data(data)
-        handle_success.assert_called_with(True, "SOFT_RESET")
-
-        # test REBOOT
-        data = {"object": "REBOOT", "success": False}
-        await connector.on_data(data)
-        handle_success.assert_called_with(False, "REBOOT")
+        test_dispatch.assert_called()
 
         # test ERROR
         data = {"object": "REBOOT", "success": False, "error": "error"}
         assert await connector.on_data(data) is None
+
+
+async def test_dispatch_signal(hass: HomeAssistant):
+    """Tests dispatch_signal."""
+    with patch(
+        "homeassistant.components.bluecurrent.async_dispatcher_send"
+    ) as test_async_dispatcher_send:
+        config_entry = MockConfigEntry(
+            domain=DOMAIN,
+            entry_id="uuid",
+            unique_id="uuid",
+            data={"token": "123", "card": {"123"}},
+        )
+
+        connector = Connector(hass, config_entry, Client)
+
+        connector.dispatch_signal("101")
+        test_async_dispatcher_send.assert_called_with(
+            hass, "bluecurrent_value_update_101"
+        )
+
+        connector.dispatch_signal()
+        test_async_dispatcher_send.assert_called_with(hass, "bluecurrent_grid_update")
+
+
+async def test_reconnect(hass: HomeAssistant):
+    """Tests reconnect."""
+
+    with patch(
+        "homeassistant.components.bluecurrent.Connector.connect",
+        side_effect=WebsocketError,
+    ), patch(
+        "homeassistant.components.bluecurrent.async_call_later"
+    ) as test_async_call_later:
+
+        config_entry = MockConfigEntry(
+            domain=DOMAIN,
+            entry_id="uuid",
+            unique_id="uuid",
+            data={"token": "123", "card": {"123"}},
+        )
+
+        connector = Connector(hass, config_entry, Client)
+        await connector.reconnect()
+
+        test_async_call_later.assert_called_with(hass, 100, connector.reconnect)

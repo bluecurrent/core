@@ -4,7 +4,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from homeassistant.components import bluecurrent
-from homeassistant.components.bluecurrent import DOMAIN
+from homeassistant.components.bluecurrent.const import DOMAIN
 from homeassistant.config_entries import ConfigEntryState
 
 from tests.common import MockConfigEntry
@@ -14,10 +14,10 @@ class TestClient:
     """Test class to mock the client."""
 
     async def disconnect(self):
-        """Fake a disconnect."""
+        """Test disconnect."""
 
     async def get_status(self, evse_id):
-        """Fake a get_status."""
+        """Test get_status."""
 
 
 async def init_integration(hass, platform, data: dict, charge_point: dict, grid={}):
