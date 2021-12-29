@@ -54,7 +54,6 @@ class ChargePointSensor(BlueCurrentEntity, SensorEntity):
 
         self._key = sensor.key
         self._attr_native_unit_of_measurement = sensor.native_unit_of_measurement
-        # self._attr_state_class = sensor.state_class
         self._attr_device_class = sensor.device_class
         self._attr_icon = sensor.icon
         self._attr_unique_id = f"{sensor.key}_{evse_id}"

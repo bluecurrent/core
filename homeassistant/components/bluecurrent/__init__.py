@@ -25,9 +25,6 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
-    ACTIVITY,
-    AVAILABLE,
-    CARD,
     CHARGE_POINTS,
     DATA,
     DELAY,
@@ -39,24 +36,12 @@ from .const import (
     MODEL_TYPE,
     OBJECT,
     PLATFORMS,
-    RESULT,
-    SERVICES,
-    SETTINGS,
-    SUCCESS,
-    UNAVAILABLE,
     URL,
     VALUE_TYPES,
 )
 
 CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_TOKEN): cv.string,
-                vol.Required(CARD): cv.string,
-            }
-        )
-    },
+    {DOMAIN: vol.Schema({vol.Required(CONF_TOKEN): cv.string})},
     extra=vol.ALLOW_EXTRA,
 )
 
@@ -91,7 +76,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     hass.data[DOMAIN][config_entry.entry_id] = connector
 
     await asyncio.sleep(1)
-    print("OK")
     hass.config_entries.async_setup_platforms(config_entry, PLATFORMS)
 
     async def _async_disconnect_websocket(_: Event) -> None:
@@ -184,29 +168,13 @@ class Connector:
             self.grid = data
             self.dispatch_signal()
 
-        # setting change responses
-        elif object_name in SETTINGS:
-            evse_id = message.pop(EVSE_ID)
-            key = object_name.lower()
-            result = message[RESULT]
-            new_data = {key: result}
-            self.update_charge_point(evse_id, new_data)
-
-            # success
-
-        # service responses
-        elif object_name in SERVICES:
-            success: bool = message[SUCCESS]
-            self.handle_success(success, object_name)
-
-        # unknown commands
+        # temp
         else:
             print("UNKNOWN", message)
 
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of the charge point."""
         await self.client.get_status(evse_id)
-        await self.client.get_settings(evse_id)
 
     def add_charge_point(self, evse_id: str, model: str) -> None:
         """Add a charge point to the dictionary."""
@@ -214,36 +182,9 @@ class Connector:
 
     def update_charge_point(self, evse_id: str, data: dict) -> None:
         """Update the charge point data."""
-
-        def handle_activity(data: dict) -> None:
-            activity = data.get(ACTIVITY)
-            if activity == AVAILABLE:
-                data[AVAILABLE] = True
-            else:
-                data[AVAILABLE] = False
-
-        def handle_available(data: dict) -> None:
-            available = data.get(AVAILABLE)
-            if available:
-                data[ACTIVITY] = AVAILABLE
-
-            else:
-                data[ACTIVITY] = UNAVAILABLE
-
-        if AVAILABLE in data:
-            handle_available(data)
-        elif ACTIVITY in data:
-            handle_activity(data)
         for key in data:
             self.charge_points[evse_id][key] = data[key]
         self.dispatch_signal(evse_id)
-
-    def handle_success(self, success: bool, object_name: str) -> None:
-        """Log a message based on success."""
-        if success:
-            LOGGER.info(object_name, "success")
-        else:
-            LOGGER.warning(object_name, "unsuccessful")
 
     def dispatch_signal(self, evse_id: str | None = None) -> None:
         """Dispatch a signal."""
@@ -258,13 +199,13 @@ class Connector:
             await self.client.start_loop()
         except WebsocketError:
             LOGGER.warning(
-                "Disconnected from the Blue Current websocket. Trying to connect in 30 seconds"
+                "Disconnected from the Blue Current websocket. Retrying to connect in background"
             )
 
             # May have to be removed.
             persistent_notification.create(
                 self._hass,
-                "Connection to the Blue Current websocket has been lost. <br> trying to reconnect in 30 seconds",
+                "Connection to the Blue Current websocket has been lost. <br> Retrying to connect in background.",
                 title=DOMAIN,
                 notification_id="bluecurrent_notification",
             )
@@ -281,9 +222,6 @@ class Connector:
             await self.start_loop()
             await self.client.get_charge_points()
         except WebsocketError:
-            LOGGER.warning(
-                "Reconnect to the Blue Current websocket failed. Trying again in 5 minutes"
-            )
             async_call_later(self._hass, DELAY * 10, self.reconnect)
 
     async def disconnect(self) -> None:
