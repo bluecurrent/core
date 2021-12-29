@@ -9,16 +9,8 @@
             "unknown": "Unexpected error"
         },
         "step": {
-            "card": {
-                "data": {
-                    "card": "Card"
-                },
-                "description": "Enter the name of your charge card",
-                "title": "Card"
-            },
             "user": {
                 "data": {
-                    "add_card": "Do you want to use your own charge card?",
                     "token": "Token"
                 },
                 "description": "Enter your Blue Current api token",

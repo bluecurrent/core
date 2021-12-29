@@ -9,16 +9,8 @@
             "unknown": "Onverwachte fout"
         },
         "step": {
-            "card": {
-                "data": {
-                  "card": "Kaart"
-                },
-                "description": "Vul de naam van je laadpas in",
-                "title": "Kaart"
-            },
             "user": {
                 "data": {
-                    "add_card": "Wil je een eigen laadpas gebruiken?",
                     "token": "Token"
                 },
                 "description": "Vul je Blue Current api token in",
