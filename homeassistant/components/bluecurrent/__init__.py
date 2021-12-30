@@ -25,6 +25,8 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
+    ACTIVITY,
+    AVAILABLE,
     CHARGE_POINTS,
     DATA,
     DELAY,
@@ -36,6 +38,9 @@ from .const import (
     MODEL_TYPE,
     OBJECT,
     PLATFORMS,
+    RESULT,
+    SETTINGS,
+    UNAVAILABLE,
     URL,
     VALUE_TYPES,
 )
@@ -168,6 +173,14 @@ class Connector:
             self.grid = data
             self.dispatch_signal()
 
+        # setting change responses
+        elif object_name in SETTINGS:
+            evse_id = message.pop(EVSE_ID)
+            key = object_name.lower()
+            result = message[RESULT]
+            new_data = {key: result}
+            self.update_charge_point(evse_id, new_data)
+
         # temp
         else:
             print("UNKNOWN", message)
@@ -175,6 +188,7 @@ class Connector:
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of the charge point."""
         await self.client.get_status(evse_id)
+        await self.client.get_settings(evse_id)
 
     def add_charge_point(self, evse_id: str, model: str) -> None:
         """Add a charge point to the dictionary."""
@@ -182,9 +196,36 @@ class Connector:
 
     def update_charge_point(self, evse_id: str, data: dict) -> None:
         """Update the charge point data."""
+
+        def handle_activity(data: dict) -> None:
+            activity = data.get(ACTIVITY)
+            if activity == AVAILABLE:
+                data[AVAILABLE] = True
+            else:
+                data[AVAILABLE] = False
+
+        def handle_available(data: dict) -> None:
+            available = data.get(AVAILABLE)
+            if available:
+                data[ACTIVITY] = AVAILABLE
+
+            else:
+                data[ACTIVITY] = UNAVAILABLE
+
+        if AVAILABLE in data:
+            handle_available(data)
+        elif ACTIVITY in data:
+            handle_activity(data)
         for key in data:
             self.charge_points[evse_id][key] = data[key]
         self.dispatch_signal(evse_id)
+
+    def handle_success(self, success: bool, object_name: str) -> None:
+        """Log a message based on success."""
+        if success:
+            LOGGER.info(object_name, "success")
+        else:
+            LOGGER.warning(object_name, "unsuccessful")
 
     def dispatch_signal(self, evse_id: str | None = None) -> None:
         """Dispatch a signal."""

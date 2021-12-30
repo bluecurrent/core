@@ -1,23 +1,35 @@
 """Constants for the BlueCurrent integration."""
 import logging
 
+from bluecurrent_api import Client
+
 from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.const import CONF_ICON, CONF_NAME
 
 DOMAIN = "bluecurrent"
 
 LOGGER = logging.getLogger(__package__)
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["sensor", "switch"]
+
+ACTIVITY = "activity"
+AVAILABLE = "available"
 CHARGE_POINTS = "CHARGE_POINTS"
 DATA = "data"
 DELAY = 10
 EVSE_ID = "evse_id"
 ERROR = "error"
 GRID_STATUS = "GRID_STATUS"
+FUNCTION = "function"
+KEY = "key"
 MODEL_TYPE = "model_type"
 OBJECT = "object"
+RESULT = "result"
+SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
+SUCCESS = "success"
 TIMESTAMP_KEYS = ("start_session", "stop_session", "offline_since")
-VALUE_TYPES = "CH_STATUS"
+UNAVAILABLE = "unavailable"
+VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 
 # temp
 URL = "ws://172.21.100.249:8765"
@@ -140,4 +152,25 @@ GRID_SENSORS = (
         device_class="current",
         name="Total Grid Current",
     ),
+)
+
+SWITCHES = (
+    {
+        KEY: "plug_and_charge",
+        FUNCTION: Client.set_plug_and_charge,
+        CONF_NAME: "Plug and charge",
+        CONF_ICON: "mdi:ev-plug-type2",
+    },
+    {
+        KEY: "public_charging",
+        FUNCTION: Client.set_public_charging,
+        CONF_NAME: "Public charging",
+        CONF_ICON: "mdi:account-group",
+    },
+    {
+        KEY: "available",
+        FUNCTION: Client.set_available,
+        CONF_NAME: "Available",
+        CONF_ICON: "mdi:power",
+    },
 )
