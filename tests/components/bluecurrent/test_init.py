@@ -118,6 +118,8 @@ async def test_on_data(hass: HomeAssistant):
     ), patch(
         "homeassistant.components.bluecurrent.Connector.dispatch_signal"
     ) as test_dispatch, patch(
+        "homeassistant.components.bluecurrent.Connector.handle_success"
+    ) as handle_success, patch(
         "homeassistant.components.bluecurrent.Connector.get_charge_point_data",
         return_value={True},
     ), patch.object(
@@ -266,6 +268,16 @@ async def test_on_data(hass: HomeAssistant):
             }
         }
         test_dispatch.assert_called_with("101")
+
+        # test SOFT_RESET
+        data = {"object": "SOFT_RESET", "success": True}
+        await connector.on_data(data)
+        handle_success.assert_called_with(True, "SOFT_RESET")
+
+        # test REBOOT
+        data = {"object": "REBOOT", "success": False}
+        await connector.on_data(data)
+        handle_success.assert_called_with(False, "REBOOT")
 
         # test ERROR
         data = {"object": "REBOOT", "success": False, "error": "error"}

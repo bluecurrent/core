@@ -3,6 +3,7 @@ import logging
 
 from bluecurrent_api import Client
 
+from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import CONF_ICON, CONF_NAME
 
@@ -10,10 +11,11 @@ DOMAIN = "bluecurrent"
 
 LOGGER = logging.getLogger(__package__)
 
-PLATFORMS = ["sensor", "switch"]
+PLATFORMS = ["sensor", "switch", "button"]
 
 ACTIVITY = "activity"
 AVAILABLE = "available"
+CARD = "card"
 CHARGE_POINTS = "CHARGE_POINTS"
 DATA = "data"
 DELAY = 10
@@ -25,6 +27,7 @@ KEY = "key"
 MODEL_TYPE = "model_type"
 OBJECT = "object"
 RESULT = "result"
+SERVICES = ("SOFT_RESET", "REBOOT")
 SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
 SUCCESS = "success"
 TIMESTAMP_KEYS = ("start_session", "stop_session", "offline_since")
@@ -32,7 +35,7 @@ UNAVAILABLE = "unavailable"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 
 # temp
-URL = "ws://172.21.100.249:8765"
+URL = "ws://172.21.97.91:8765"
 
 SENSORS = (
     SensorEntityDescription(
@@ -88,6 +91,7 @@ SENSORS = (
         native_unit_of_measurement="kWh",
         device_class="energy",
         name="Energy Usage",
+        # state_class="measurement",
     ),
     SensorEntityDescription(
         key="start_session",
@@ -153,6 +157,17 @@ GRID_SENSORS = (
         name="Total Grid Current",
     ),
 )
+
+BUTTONS = (
+    ButtonEntityDescription(
+        key="get_status", name="Get status", icon="mdi:database-arrow-down"
+    ),
+    ButtonEntityDescription(key="reset", name="Get Reset", icon="mdi:restart"),
+    ButtonEntityDescription(key="reboot", name="Reboot", icon="mdi:restart-alert"),
+    ButtonEntityDescription(key="start_session", name="Start session", icon="mdi:play"),
+    ButtonEntityDescription(key="stop_session", name="Stop session", icon="mdi:stop"),
+)
+
 
 SWITCHES = (
     {
