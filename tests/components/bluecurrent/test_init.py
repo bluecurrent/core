@@ -181,6 +181,7 @@ async def test_on_data(hass: HomeAssistant):
                 "total_cost": 10.52,
                 "vehicle_status": "A",
                 "actual_kwh": 10,
+                "available": False,
             }
         }
 
@@ -202,6 +203,69 @@ async def test_on_data(hass: HomeAssistant):
             "grid_actual_p3": 15,
         }
         test_dispatch.assert_called()
+
+        # reset charge_point
+        connector.charge_points["101"] = {}
+
+        # test CH_SETTINGS
+        data = {
+            "object": "CH_SETTINGS",
+            "data": {
+                "available": False,
+                "plug_and_charge": False,
+                "public_charging": False,
+                "evse_id": "101",
+            },
+        }
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": False,
+                "plug_and_charge": False,
+                "public_charging": False,
+                "activity": "unavailable",
+            }
+        }
+        test_dispatch.assert_called_with("101")
+
+        # test PUBLIC_CHARGING
+        data = {"object": "PUBLIC_CHARGING", "result": True, "evse_id": "101"}
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": False,
+                "plug_and_charge": False,
+                "public_charging": True,
+                "activity": "unavailable",
+            }
+        }
+        test_dispatch.assert_called_with("101")
+
+        # test AVAILABLE
+        data = {"object": "AVAILABLE", "result": True, "evse_id": "101"}
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": True,
+                "plug_and_charge": False,
+                "public_charging": True,
+                "activity": "available",
+            }
+        }
+        test_dispatch.assert_called_with("101")
+
+        # test PLUG_AND_CHARGE
+        data = {"object": "PLUG_AND_CHARGE", "result": True, "evse_id": "101"}
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": True,
+                "plug_and_charge": True,
+                "public_charging": True,
+                "activity": "available",
+            }
+        }
+        test_dispatch.assert_called_with("101")
 
         # test ERROR
         data = {"object": "REBOOT", "success": False, "error": "error"}
