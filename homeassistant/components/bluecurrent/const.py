@@ -35,7 +35,7 @@ UNAVAILABLE = "unavailable"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 
 # temp
-URL = "ws://172.21.97.91:8765"
+URL = "ws://192.168.128.237:8765"
 
 SENSORS = (
     SensorEntityDescription(

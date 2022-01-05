@@ -29,11 +29,9 @@ async def validate_input(data: dict) -> None:
 
 async def get_charge_cards(token: str) -> list:
     """Validate the user input allows us to connect."""
-
-    # can have websocket error or no cards?
     client = Client()
-    result: dict[str, list] = await client.get_charge_cards(token, URL)
-    return result["data"]
+    cards: list = await client.get_charge_cards(token, URL)
+    return cards
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -109,7 +107,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.input[CARD] = selected_card
                 return self.async_create_entry(title=token[:5], data=self.input)
 
-        return self.async_show_form(step_id=CARD, data_schema=card_schema, errors={})
+            return self.async_show_form(step_id=CARD, data_schema=card_schema)
+
+        return self.async_show_form(
+            step_id="user", data_schema=DATA_SCHEMA, errors=errors
+        )
 
     async def async_step_import(
         self, user_input: dict[str, Any] | None = None

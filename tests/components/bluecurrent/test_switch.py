@@ -54,7 +54,6 @@ async def test_toggle(hass: HomeAssistant):
     await init_integration(hass, "switch", data, charge_point)
 
     state = hass.states.get("switch.public_charging_101")
-    print("STATE:", state)
 
     assert state.state == "off"
     await hass.services.async_call(
