@@ -5,7 +5,7 @@ import asyncio
 from typing import Any
 
 from bluecurrent_api import Client
-from bluecurrent_api.errors import WebsocketError
+from bluecurrent_api.errors import InvalidToken, WebsocketError
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -65,12 +65,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the BlueCurrent component."""
     conf = config.get(DOMAIN)
 
-    if conf is not None:
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                DOMAIN, context={"source": config_entries.SOURCE_IMPORT}, data=conf
-            )
+    hass.async_create_task(
+        hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_IMPORT}, data=conf
         )
+    )
 
     return True
 
@@ -83,7 +82,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     connector = Connector(hass, config_entry, client)
     try:
         await connector.connect(token)
-    except WebsocketError as err:
+    except (WebsocketError, InvalidToken) as err:
         LOGGER.error("Config entry failed: %s", err)
         raise ConfigEntryNotReady from err
 
@@ -224,7 +223,7 @@ class Connector:
 
         # temp
         else:
-            print("UNKNOWN", message)
+            LOGGER.debug("Unknown object %s", object_name)
 
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of the charge point."""
@@ -264,7 +263,7 @@ class Connector:
     def handle_success(self, success: bool, object_name: str) -> None:
         """Log a message based on success."""
         if success:
-            LOGGER.info(object_name, "success")
+            LOGGER.debug(object_name, "success")
         else:
             LOGGER.warning(object_name, "unsuccessful")
 
@@ -300,7 +299,7 @@ class Connector:
         """Keep trying to reconnect to the websocket."""
         try:
             await self.connect(self._config.data[CONF_TOKEN])
-            LOGGER.info("Reconnected to the Blue Current websocket")
+            LOGGER.warning("Reconnected to the Blue Current websocket")
             await self.start_loop()
             await self.client.get_charge_points()
         except WebsocketError:

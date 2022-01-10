@@ -10,7 +10,6 @@ from homeassistant.components import bluecurrent
 from homeassistant.components.bluecurrent import (
     DOMAIN,
     Connector,
-    async_setup,
     async_setup_entry,
     set_entities_unavalible,
 )
@@ -66,7 +65,15 @@ async def test_config_not_ready(hass: HomeAssistant):
 
 async def test_async_setup(hass: HomeAssistant):
     """Tests async_setup."""
-    result = await async_setup(hass, {"bluecurrent": {"token": "123", "card": "123"}})
+    # need to patch validate_input in config_flow
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        entry_id="uuid",
+        unique_id="uuid",
+        data={"token": "123", "card": {"123"}},
+    )
+    config_entry.add_to_hass(hass)
+    result = await bluecurrent.async_setup(hass, config_entry.data)
     assert result is True
 
 

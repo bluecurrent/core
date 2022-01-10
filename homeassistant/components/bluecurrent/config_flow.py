@@ -104,7 +104,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 selected_card = list(filter(check_card, cards))[0]
 
-                self.input[CARD] = selected_card
+                self.input[CARD] = selected_card["uid"]
                 return self.async_create_entry(title=token[:5], data=self.input)
 
             return self.async_show_form(step_id=CARD, data_schema=card_schema)

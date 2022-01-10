@@ -48,7 +48,7 @@ async def test_default_card(hass: HomeAssistant) -> None:
 
     assert result2["type"] == RESULT_TYPE_CREATE_ENTRY
     assert result2["title"] == "123"
-    assert result2["data"] == {"token": "123", "card": {"card_id": "BCU_APP"}}
+    assert result2["data"] == {"token": "123", "card": "BCU_APP"}
 
 
 async def test_user_card(hass: HomeAssistant) -> None:
@@ -64,7 +64,7 @@ async def test_user_card(hass: HomeAssistant) -> None:
         return_value=True,
     ), patch(
         "homeassistant.components.bluecurrent.config_flow.get_charge_cards",
-        return_value=[{"name": "card 1", "id": 1}, {"name": "card 2", "id": 2}],
+        return_value=[{"name": "card 1", "uid": 1}, {"name": "card 2", "uid": 2}],
     ), patch(
         "homeassistant.components.bluecurrent.async_setup_entry",
         return_value=True,
@@ -77,7 +77,7 @@ async def test_user_card(hass: HomeAssistant) -> None:
 
     with patch(
         "homeassistant.components.bluecurrent.config_flow.get_charge_cards",
-        return_value=[{"name": "card 1", "id": 1}, {"name": "card 2", "id": 2}],
+        return_value=[{"name": "card 1", "uid": 1}, {"name": "card 2", "uid": 2}],
     ), patch(
         "homeassistant.components.bluecurrent.async_setup_entry",
         return_value=True,
@@ -92,7 +92,7 @@ async def test_user_card(hass: HomeAssistant) -> None:
 
     assert result3["type"] == RESULT_TYPE_CREATE_ENTRY
     assert result3["title"] == "123"
-    assert result3["data"] == {"token": "123", "card": {"name": "card 1", "id": 1}}
+    assert result3["data"] == {"token": "123", "card": 1}
 
 
 async def test_form_invalid_token(hass: HomeAssistant) -> None:
