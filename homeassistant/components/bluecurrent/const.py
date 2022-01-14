@@ -12,7 +12,7 @@ LOGGER = logging.getLogger(__package__)
 
 PLATFORMS = ["sensor", "switch"]
 
-ACTIVITY = "activity"
+ACTIVITY = "ch_activity"
 AVAILABLE = "available"
 CHARGE_POINTS = "CHARGE_POINTS"
 DATA = "data"
