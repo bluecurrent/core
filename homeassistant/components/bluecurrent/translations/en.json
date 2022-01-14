@@ -11,7 +11,7 @@
         "step": {
             "user": {
                 "data": {
-                    "token": "Token"
+                    "api_token": "API Token"
                 },
                 "description": "Enter your Blue Current api token",
                 "title": "Authentication"

@@ -31,78 +31,75 @@ TIMESTAMP_KEYS = ("start_session", "stop_session", "offline_since")
 UNAVAILABLE = "unavailable"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 
-# temp
-URL = "ws://172.21.100.249:8765"
-
 SENSORS = (
     SensorEntityDescription(
-        key="actual_v1",
+        key="ch_actual_v1",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 1",
     ),
     SensorEntityDescription(
-        key="actual_v2",
+        key="ch_actual_v2",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 2",
     ),
     SensorEntityDescription(
-        key="actual_v3",
+        key="ch_actual_v3",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Voltage Phase 3",
     ),
     SensorEntityDescription(
-        key="total_voltage",
+        key="ch_total_voltage",
         native_unit_of_measurement="V",
         device_class="voltage",
         name="Total Voltage",
     ),
     SensorEntityDescription(
-        key="actual_p1",
+        key="ch_actual_p1",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 1",
     ),
     SensorEntityDescription(
-        key="actual_p2",
+        key="ch_actual_p2",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 2",
     ),
     SensorEntityDescription(
-        key="actual_p3",
+        key="ch_actual_p3",
         native_unit_of_measurement="A",
         device_class="current",
         name="Current Phase 3",
     ),
     SensorEntityDescription(
-        key="total_current",
+        key="ch_total_current",
         native_unit_of_measurement="A",
         device_class="current",
         name="Total Current",
     ),
     SensorEntityDescription(
-        key="actual_kwh",
+        key="ch_actual_kwh",
         native_unit_of_measurement="kWh",
         device_class="energy",
         name="Energy Usage",
     ),
     SensorEntityDescription(
-        key="start_session",
+        key="start_datetime",
         native_unit_of_measurement="Timestamp",
         device_class="timestamp",
         name="Session Start Date",
     ),
     SensorEntityDescription(
-        key="stop_session",
+        key="stop_datetime",
         native_unit_of_measurement="Timestamp",
         device_class="timestamp",
         name="Session Stop Date",
     ),
     SensorEntityDescription(
-        key="offline_since",
+        key="ch_offline_since",
         native_unit_of_measurement="Timestamp",
         device_class="timestamp",
         name="Offline Since",
@@ -120,7 +117,7 @@ SENSORS = (
         device_class="bluecurrent__vehicle_status",
     ),
     SensorEntityDescription(
-        key="activity",
+        key="ch_activity",
         name="Activity",
         icon="mdi:ev-station",
         device_class="bluecurrent__activity",
