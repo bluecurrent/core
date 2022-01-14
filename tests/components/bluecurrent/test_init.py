@@ -10,7 +10,6 @@ from homeassistant.components import bluecurrent
 from homeassistant.components.bluecurrent import (
     DOMAIN,
     Connector,
-    async_setup,
     async_setup_entry,
     set_entities_unavalible,
 )
@@ -34,7 +33,7 @@ async def test_load_and_unload_entry(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": {"123"}},
         )
         config_entry.add_to_hass(hass)
 
@@ -57,7 +56,7 @@ async def test_config_not_ready(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": {"123"}},
         )
         config_entry.add_to_hass(hass)
 
@@ -66,7 +65,14 @@ async def test_config_not_ready(hass: HomeAssistant):
 
 async def test_async_setup(hass: HomeAssistant):
     """Tests async_setup."""
-    result = await async_setup(hass, {"bluecurrent": {"token": "123", "card": "123"}})
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        entry_id="uuid",
+        unique_id="uuid",
+        data={"api_token": "123", "card": {"123"}},
+    )
+    config_entry.add_to_hass(hass)
+    result = await bluecurrent.async_setup(hass, config_entry.data)
     assert result is True
 
 
@@ -81,18 +87,18 @@ async def test_set_entities_unavalible(hass: HomeAssistant):
     }
 
     charge_point = {
-        "actual_v1": 14,
-        "actual_v2": 18,
-        "actual_v3": 15,
-        "actual_p1": 19,
-        "actual_p2": 14,
-        "actual_p3": 15,
+        "ch_actual_v1": 14,
+        "ch_actual_v2": 18,
+        "ch_actual_v3": 15,
+        "ch_actual_p1": 19,
+        "ch_actual_p2": 14,
+        "ch_actual_p3": 15,
     }
 
     await init_integration(hass, "sensor", data, charge_point)
 
     set_entities_unavalible(hass, "uuid")
-    state = hass.states.get("sensor.actual_v1_101")
+    state = hass.states.get("sensor.ch_actual_v1_101")
 
     for key in charge_point:
         state = hass.states.get(f"sensor.{key}_101")
@@ -127,7 +133,7 @@ async def test_on_data(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": {"123"}},
         )
         config_entry.add_to_hass(hass)
 
@@ -281,7 +287,7 @@ async def test_dispatch_signal(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": {"123"}},
         )
 
         connector = Connector(hass, config_entry, Client)
@@ -309,7 +315,7 @@ async def test_reconnect(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": {"123"}},
         )
 
         connector = Connector(hass, config_entry, Client)

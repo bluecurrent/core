@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from typing import Any
 
 from bluecurrent_api import Client
@@ -9,9 +10,8 @@ from bluecurrent_api.errors import WebsocketError
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_TOKEN, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import entity_registry
@@ -41,12 +41,11 @@ from .const import (
     RESULT,
     SETTINGS,
     UNAVAILABLE,
-    URL,
     VALUE_TYPES,
 )
 
 CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: vol.Schema({vol.Required(CONF_TOKEN): cv.string})},
+    {DOMAIN: vol.Schema({vol.Required(CONF_API_TOKEN): cv.string})},
     extra=vol.ALLOW_EXTRA,
 )
 
@@ -55,12 +54,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the BlueCurrent component."""
     conf = config.get(DOMAIN)
 
-    if conf is not None:
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                DOMAIN, context={"source": config_entries.SOURCE_IMPORT}, data=conf
-            )
+    hass.async_create_task(
+        hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_IMPORT}, data=conf
         )
+    )
 
     return True
 
@@ -69,10 +67,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     """Set up Blue Current as a config entry."""
     hass.data.setdefault(DOMAIN, {})
     client = Client()
-    token = config_entry.data[CONF_TOKEN]
+    api_token = config_entry.data[CONF_API_TOKEN]
     connector = Connector(hass, config_entry, client)
     try:
-        await connector.connect(token)
+        await connector.connect(api_token)
     except WebsocketError as err:
         LOGGER.error("Config entry failed: %s", err)
         raise ConfigEntryNotReady from err
@@ -131,8 +129,8 @@ class Connector:
 
     async def connect(self, token: str) -> None:
         """Register on_data and connect to the websocket."""
-        self.client.set_on_data(self.on_data)
-        await self.client.connect(token, URL)
+        self.client.set_receiver(self.on_data)
+        await self.client.connect(token)
         await self.client.get_charge_points()
 
     async def on_data(self, message: dict) -> None:
@@ -147,11 +145,11 @@ class Connector:
                 await self.get_charge_point_data(evse_id)
             await self.client.get_grid_status(data[0][EVSE_ID])
 
-        if ERROR in message:
-            LOGGER.error(message[ERROR])
-            return
-
         object_name: str = message[OBJECT]
+
+        if ERROR in message:
+            LOGGER.debug("Received an error: %s for %s", message[ERROR], object_name)
+            return
 
         if DATA in message:
             data: dict | list = message[DATA]
@@ -180,10 +178,6 @@ class Connector:
             result = message[RESULT]
             new_data = {key: result}
             self.update_charge_point(evse_id, new_data)
-
-        # temp
-        else:
-            print("UNKNOWN", message)
 
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of the charge point."""
@@ -243,23 +237,15 @@ class Connector:
                 "Disconnected from the Blue Current websocket. Retrying to connect in background"
             )
 
-            # May have to be removed.
-            persistent_notification.create(
-                self._hass,
-                "Connection to the Blue Current websocket has been lost. <br> Retrying to connect in background.",
-                title=DOMAIN,
-                notification_id="bluecurrent_notification",
-            )
-
             set_entities_unavalible(self._hass, self._config.entry_id)
 
             async_call_later(self._hass, DELAY, self.reconnect)
 
-    async def reconnect(self, timestamp: int | None = None) -> None:
+    async def reconnect(self, event_time: datetime | None = None) -> None:
         """Keep trying to reconnect to the websocket."""
         try:
-            await self.connect(self._config.data[CONF_TOKEN])
-            LOGGER.info("Reconnected to the Blue Current websocket")
+            await self.connect(self._config.data[CONF_API_TOKEN])
+            LOGGER.warning("Reconnected to the Blue Current websocket")
             await self.start_loop()
             await self.client.get_charge_points()
         except WebsocketError:
