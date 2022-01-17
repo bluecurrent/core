@@ -76,7 +76,7 @@ async def init_integration(hass, platform, data: dict, charge_point: dict, grid=
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": "123"},
         )
         config_entry.add_to_hass(hass)
 

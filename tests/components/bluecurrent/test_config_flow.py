@@ -41,14 +41,14 @@ async def test_default_card(hass: HomeAssistant) -> None:
         result2 = await hass.config_entries.flow.async_configure(
             result["flow_id"],
             {
-                "token": "123",
+                "api_token": "123",
             },
         )
         await hass.async_block_till_done()
 
     assert result2["type"] == RESULT_TYPE_CREATE_ENTRY
     assert result2["title"] == "123"
-    assert result2["data"] == {"token": "123", "card": "BCU_APP"}
+    assert result2["data"] == {"api_token": "123", "card": "BCU_APP"}
 
 
 async def test_user_card(hass: HomeAssistant) -> None:
@@ -71,7 +71,7 @@ async def test_user_card(hass: HomeAssistant) -> None:
     ):
         result2 = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {"token": "123", "add_card": True},
+            {"api_token": "123", "add_card": True},
         )
         await hass.async_block_till_done()
 
@@ -92,11 +92,11 @@ async def test_user_card(hass: HomeAssistant) -> None:
 
     assert result3["type"] == RESULT_TYPE_CREATE_ENTRY
     assert result3["title"] == "123"
-    assert result3["data"] == {"token": "123", "card": 1}
+    assert result3["data"] == {"api_token": "123", "card": 1}
 
 
 async def test_form_invalid_token(hass: HomeAssistant) -> None:
-    """Test we handle invalid token."""
+    """Test we handle invalid api token."""
     with patch(
         "homeassistant.components.bluecurrent.config_flow.validate_input",
         side_effect=InvalidToken,
@@ -104,13 +104,13 @@ async def test_form_invalid_token(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": config_entries.SOURCE_USER},
-            data={"token": "123"},
+            data={"api_token": "123"},
         )
         assert result["errors"] == {"base": "invalid_token"}
 
 
 async def test_form_exception(hass: HomeAssistant) -> None:
-    """Test we handle invalid token."""
+    """Test we handle invalid api token."""
     with patch(
         "homeassistant.components.bluecurrent.config_flow.validate_input",
         side_effect=Exception,
@@ -118,7 +118,7 @@ async def test_form_exception(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": config_entries.SOURCE_USER},
-            data={"token": "123"},
+            data={"api_token": "123"},
         )
         assert result["errors"] == {"base": "unknown"}
 
@@ -133,7 +133,7 @@ async def test_form_cannot_connect(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": config_entries.SOURCE_USER},
-            data={"token": "123"},
+            data={"api_token": "123"},
         )
         assert result["errors"] == {"base": "cannot_connect"}
 
@@ -151,16 +151,7 @@ async def test_form_no_cards_found(hass: HomeAssistant) -> None:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": config_entries.SOURCE_USER},
-            data={"token": "123", "add_card": True},
+            data={"api_token": "123", "add_card": True},
         )
 
         assert result["errors"] == {"base": "no_cards_found"}
-
-    # with patch(
-    #     "homeassistant.components.bluecurrent.config_flow.get_charge_cards",
-    #     side_effect=NoCardsFound,
-    # ):
-    #     result = await hass.config_entries.flow.async_configure(
-    #         result["flow_id"],
-    #     )
-    #     assert result["errors"] == {"base": "no_cards_found"}

@@ -33,7 +33,7 @@ async def test_load_and_unload_entry(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": "123"},
         )
         config_entry.add_to_hass(hass)
 
@@ -56,7 +56,7 @@ async def test_config_not_ready(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": "123"},
         )
         config_entry.add_to_hass(hass)
 
@@ -70,7 +70,7 @@ async def test_async_setup(hass: HomeAssistant):
         domain=DOMAIN,
         entry_id="uuid",
         unique_id="uuid",
-        data={"token": "123", "card": {"123"}},
+        data={"api_token": "123", "card": "123"},
     )
     config_entry.add_to_hass(hass)
     result = await bluecurrent.async_setup(hass, config_entry.data)
@@ -88,18 +88,18 @@ async def test_set_entities_unavalible(hass: HomeAssistant):
     }
 
     charge_point = {
-        "actual_v1": 14,
-        "actual_v2": 18,
-        "actual_v3": 15,
-        "actual_p1": 19,
-        "actual_p2": 14,
-        "actual_p3": 15,
+        "ch_actual_v1": 14,
+        "ch_actual_v2": 18,
+        "ch_actual_v3": 15,
+        "ch_actual_p1": 19,
+        "ch_actual_p2": 14,
+        "ch_actual_p3": 15,
     }
 
     await init_integration(hass, "sensor", data, charge_point)
 
     set_entities_unavalible(hass, "uuid")
-    state = hass.states.get("sensor.actual_v1_101")
+    state = hass.states.get("sensor.ch_actual_v1_101")
 
     for key in charge_point:
         state = hass.states.get(f"sensor.{key}_101")
@@ -136,7 +136,7 @@ async def test_on_data(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": "123"},
         )
         config_entry.add_to_hass(hass)
 
@@ -157,19 +157,19 @@ async def test_on_data(hass: HomeAssistant):
         data = {
             "object": "CH_STATUS",
             "data": {
-                "actual_v1": 12,
-                "actual_v2": 14,
-                "actual_v3": 15,
-                "actual_p1": 12,
-                "actual_p2": 14,
-                "actual_p3": 15,
-                "activity": "charging",
-                "start_session": "2021-11-18T14:12:23",
-                "stop_session": "2021-11-18T14:32:23",
-                "offline_since": "2021-11-18T14:32:23",
+                "ch_actual_v1": 12,
+                "ch_actual_v2": 14,
+                "ch_actual_v3": 15,
+                "ch_actual_p1": 12,
+                "ch_actual_p2": 14,
+                "ch_actual_p3": 15,
+                "ch_activity": "charging",
+                "start_datetime": "2021-11-18T14:12:23",
+                "stop_datetime": "2021-11-18T14:32:23",
+                "ch_offline_since": "2021-11-18T14:32:23",
                 "total_cost": 10.52,
                 "vehicle_status": "A",
-                "actual_kwh": 10,
+                "ch_actual_kwh": 10,
                 "evse_id": "101",
             },
         }
@@ -177,19 +177,19 @@ async def test_on_data(hass: HomeAssistant):
         assert connector.charge_points == {
             "101": {
                 "model_type": "hidden",
-                "actual_v1": 12,
-                "actual_v2": 14,
-                "actual_v3": 15,
-                "actual_p1": 12,
-                "actual_p2": 14,
-                "actual_p3": 15,
-                "activity": "charging",
-                "start_session": "2021-11-18T14:12:23",
-                "stop_session": "2021-11-18T14:32:23",
-                "offline_since": "2021-11-18T14:32:23",
+                "ch_actual_v1": 12,
+                "ch_actual_v2": 14,
+                "ch_actual_v3": 15,
+                "ch_actual_p1": 12,
+                "ch_actual_p2": 14,
+                "ch_actual_p3": 15,
+                "ch_activity": "charging",
+                "start_datetime": "2021-11-18T14:12:23",
+                "stop_datetime": "2021-11-18T14:32:23",
+                "ch_offline_since": "2021-11-18T14:32:23",
                 "total_cost": 10.52,
                 "vehicle_status": "A",
-                "actual_kwh": 10,
+                "ch_actual_kwh": 10,
                 "available": False,
             }
         }
@@ -232,7 +232,7 @@ async def test_on_data(hass: HomeAssistant):
                 "available": False,
                 "plug_and_charge": False,
                 "public_charging": False,
-                "activity": "unavailable",
+                "ch_activity": "unavailable",
             }
         }
         test_dispatch.assert_called_with("101")
@@ -245,7 +245,7 @@ async def test_on_data(hass: HomeAssistant):
                 "available": False,
                 "plug_and_charge": False,
                 "public_charging": True,
-                "activity": "unavailable",
+                "ch_activity": "unavailable",
             }
         }
         test_dispatch.assert_called_with("101")
@@ -258,7 +258,7 @@ async def test_on_data(hass: HomeAssistant):
                 "available": True,
                 "plug_and_charge": False,
                 "public_charging": True,
-                "activity": "available",
+                "ch_activity": "available",
             }
         }
         test_dispatch.assert_called_with("101")
@@ -271,7 +271,7 @@ async def test_on_data(hass: HomeAssistant):
                 "available": True,
                 "plug_and_charge": True,
                 "public_charging": True,
-                "activity": "available",
+                "ch_activity": "available",
             }
         }
         test_dispatch.assert_called_with("101")
@@ -300,7 +300,7 @@ async def test_dispatch_signal(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": "123"},
         )
 
         connector = Connector(hass, config_entry, Client)
@@ -328,7 +328,7 @@ async def test_reconnect(hass: HomeAssistant):
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"token": "123", "card": {"123"}},
+            data={"api_token": "123", "card": "123"},
         )
 
         connector = Connector(hass, config_entry, Client)
