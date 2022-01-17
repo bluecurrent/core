@@ -19,7 +19,7 @@
             "user": {
                 "data": {
                     "add_card": "Wil je een eigen laadpas gebruiken?",
-                    "token": "Token"
+                    "api_token": "API Token"
                 },
                 "description": "Vul je Blue Current api token in",
                 "title": "Authenticatie"

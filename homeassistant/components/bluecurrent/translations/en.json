@@ -19,7 +19,7 @@
             "user": {
                 "data": {
                     "add_card": "Do you want to use your own charge card?",
-                    "token": "Token"
+                    "api_token": "API Token"
                 },
                 "description": "Enter your Blue Current api token",
                 "title": "Authentication"

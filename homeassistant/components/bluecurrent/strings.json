@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "data": {
-          "token": "Token",
+          "api_token": "API Token",
           "add_card": "Do you want to use your own charge card?"
         },
         "description": "Enter your Blue Current api token",
