@@ -1,4 +1,4 @@
-"""The tests for Octoptint binary sensor module."""
+"""The tests for Bluecurrent switches."""
 import asyncio
 
 from homeassistant.components.bluecurrent import Connector

@@ -27,7 +27,7 @@ OBJECT = "object"
 RESULT = "result"
 SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
 SUCCESS = "success"
-TIMESTAMP_KEYS = ("start_session", "stop_session", "offline_since")
+TIMESTAMP_KEYS = ("start_datetime", "stop_datetime", "ch_offline_since")
 UNAVAILABLE = "unavailable"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 
@@ -108,7 +108,7 @@ SENSORS = (
         key="total_cost",
         native_unit_of_measurement="EUR",
         device_class="monetary",
-        name="Total cost",
+        name="Total Cost",
     ),
     SensorEntityDescription(
         key="vehicle_status",

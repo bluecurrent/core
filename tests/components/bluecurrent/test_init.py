@@ -22,7 +22,7 @@ from tests.components.bluecurrent import init_integration
 
 
 async def test_load_and_unload_entry(hass: HomeAssistant):
-    """Test load and unload."""
+    """Test load and unload entry."""
 
     with patch("homeassistant.components.bluecurrent.PLATFORMS", []), patch(
         "homeassistant.components.bluecurrent.Connector.connect", return_value={True}
