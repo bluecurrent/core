@@ -19,7 +19,7 @@ buttons = ("start_session", "stop_session", "reset", "reboot", "get_status")
 
 
 async def test_buttons(hass: HomeAssistant):
-    """Test the underlying sensors."""
+    """Test the underlying buttons."""
     await init_integration(hass, "button", data, {})
 
     entity_registry = er.async_get(hass)

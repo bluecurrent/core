@@ -132,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Unload an BlueCurrent config entry."""
+    """Unload the BlueCurrent config entry."""
     connector: Connector = hass.data[DOMAIN].pop(config_entry.entry_id)
     hass.async_create_task(connector.disconnect())
 
@@ -311,7 +311,7 @@ class BlueCurrentEntity(Entity):
         name: str,
         evse_id: str,
     ) -> None:
-        """Initialize the sensor."""
+        """Initialize the entity."""
         self.entity_type = entity_type
         self._evse_id: str = evse_id
         self._connector: Connector = connector

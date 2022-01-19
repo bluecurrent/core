@@ -9,7 +9,8 @@
   "homekit": {},
   "dependencies": [],
   "codeowners": [
-    "@Floris272"
+    "@Floris272",
+    "@gleeuwen"
   ],
   "iot_class": "cloud_push"
 }

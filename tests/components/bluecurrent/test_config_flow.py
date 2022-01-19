@@ -14,7 +14,7 @@ from homeassistant.data_entry_flow import RESULT_TYPE_CREATE_ENTRY, RESULT_TYPE_
 
 
 async def test_form(hass: HomeAssistant) -> None:
-    """Test we get the form."""
+    """Test if the form is created."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -96,7 +96,7 @@ async def test_user_card(hass: HomeAssistant) -> None:
 
 
 async def test_form_invalid_token(hass: HomeAssistant) -> None:
-    """Test we handle invalid api token."""
+    """Test if an invalid api token is handled."""
     with patch(
         "homeassistant.components.bluecurrent.config_flow.validate_input",
         side_effect=InvalidToken,
@@ -110,7 +110,7 @@ async def test_form_invalid_token(hass: HomeAssistant) -> None:
 
 
 async def test_form_exception(hass: HomeAssistant) -> None:
-    """Test we handle invalid api token."""
+    """Test if an exception is handled."""
     with patch(
         "homeassistant.components.bluecurrent.config_flow.validate_input",
         side_effect=Exception,
@@ -124,7 +124,7 @@ async def test_form_exception(hass: HomeAssistant) -> None:
 
 
 async def test_form_cannot_connect(hass: HomeAssistant) -> None:
-    """Test we handle cannot connect error."""
+    """Test if a connection error is handled."""
 
     with patch(
         "homeassistant.components.bluecurrent.config_flow.validate_input",
@@ -139,7 +139,7 @@ async def test_form_cannot_connect(hass: HomeAssistant) -> None:
 
 
 async def test_form_no_cards_found(hass: HomeAssistant) -> None:
-    """Test we handle cannot connect error."""
+    """Test if a no cards error is handled."""
 
     with patch(
         "homeassistant.components.bluecurrent.config_flow.validate_input",
@@ -155,3 +155,22 @@ async def test_form_no_cards_found(hass: HomeAssistant) -> None:
         )
 
         assert result["errors"] == {"base": "no_cards_found"}
+
+
+async def test_form_cannot_connect_card(hass: HomeAssistant) -> None:
+    """Test if a connection error on get_charge_cards is handled."""
+
+    with patch(
+        "homeassistant.components.bluecurrent.config_flow.validate_input",
+        return_value=True,
+    ), patch(
+        "homeassistant.components.bluecurrent.config_flow.get_charge_cards",
+        side_effect=WebsocketError,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+            data={"api_token": "123", "add_card": True},
+        )
+
+        assert result["errors"] == {"base": "cannot_connect"}
