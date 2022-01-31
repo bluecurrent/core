@@ -155,9 +155,6 @@ GRID_SENSORS = (
 )
 
 BUTTONS = (
-    ButtonEntityDescription(
-        key="get_status", name="Get status", icon="mdi:database-arrow-down"
-    ),
     ButtonEntityDescription(key="reset", name="Reset", icon="mdi:restart"),
     ButtonEntityDescription(key="reboot", name="Reboot", icon="mdi:restart-alert"),
     ButtonEntityDescription(key="start_session", name="Start session", icon="mdi:play"),

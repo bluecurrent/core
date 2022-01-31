@@ -1,12 +1,3 @@
-get_status:
-  name: Get status
-  description: get the status of a chargepoint.
-  fields:
-    evse_id:
-      name: Id
-      description: chargepoint id
-      required: true
-
 reset:
   name: Reset chargepoint
   description: resets the chargepoint.

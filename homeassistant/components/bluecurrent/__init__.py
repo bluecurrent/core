@@ -102,10 +102,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         )
     )
 
-    async def handle_get_status(call: ServiceCall) -> None:
-        evse_id = call.data.get(EVSE_ID)
-        await client.get_status(evse_id)
-
     async def handle_reset(call: ServiceCall) -> None:
         evse_id = call.data.get(EVSE_ID)
         await client.reset(evse_id)
@@ -122,7 +118,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         evse_id = call.data.get(EVSE_ID)
         await client.stop_session(evse_id)
 
-    hass.services.async_register(DOMAIN, "get_status", handle_get_status)
     hass.services.async_register(DOMAIN, "reset", handle_reset)
     hass.services.async_register(DOMAIN, "reboot", handle_reboot)
     hass.services.async_register(DOMAIN, "start_session", handle_start_session)

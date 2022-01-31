@@ -15,7 +15,7 @@ data = {
     }
 }
 
-buttons = ("start_session", "stop_session", "reset", "reboot", "get_status")
+buttons = ("start_session", "stop_session", "reset", "reboot")
 
 
 async def test_buttons(hass: HomeAssistant):
