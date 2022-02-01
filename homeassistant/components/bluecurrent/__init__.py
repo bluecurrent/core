@@ -177,8 +177,6 @@ class Connector:
 
         object_name: str = message[OBJECT]
 
-        print(object_name)
-
         if ERROR in message:
             LOGGER.debug("Received an error: %s for %s", message[ERROR], object_name)
             return
