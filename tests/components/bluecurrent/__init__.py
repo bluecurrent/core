@@ -52,7 +52,7 @@ TEST_SWITCHES = (
 
 
 async def init_integration(hass, platform, data: dict, charge_point: dict, grid={}):
-    """Set up the octoprint integration in Home Assistant."""
+    """Set up the bluecurrent integration in Home Assistant."""
 
     data["101"].update(charge_point)
     with patch("homeassistant.components.bluecurrent.PLATFORMS", [platform]), patch(
