@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "data": {
-          "api_token": "API Token",
+          "api_token": "[%key:common::config_flow::data::api_token%]",
           "add_card": "Do you want to use your own charge card?"
         },
         "description": "Enter your Blue Current api token",
@@ -25,5 +25,33 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
+  },
+    "device_automation": {
+      "trigger_type": {
+        "available": "charge point becomes available",
+        "charging": "charge point started charging",
+        "unavailable": "charge point becomes unavailable",
+        "error": "charge point has error",
+        "offline": "charge point is offline",
+        "standby": "vehicle is in standby",
+        "vehicle_detected": "vehicle is detected",
+        "ready": "vehicle is ready",
+        "with_ventilation": "vehicle has ventilation",
+        "no_power": "vehicle has no power",
+        "vehicle_error": "vehicle has error"
+      },
+      "condition_type": {
+        "available": "charge point is available",
+        "charging": "charge point is charging",
+        "unavailable": "charge point is unavailable",
+        "error": "charge point has error",
+        "offline": "charge point is offline",
+        "standby": "vehicle is in standby",
+        "vehicle_detected": "vehicle is detected",
+        "ready": "vehicle is ready",
+        "with_ventilation": "vehicle has ventilation",
+        "no_power": "vehicle has no power",
+        "vehicle_error": "vehicle has error"
+      }
+    }
   }
-}

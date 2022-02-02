@@ -25,5 +25,39 @@
                 "title": "Authenticatie"
             }
         }
+    },
+    "device_automation": {
+        "action_type": {
+            "reboot": "Reboot laadpunt",
+            "reset": "Reset laadpunt",
+            "start_session": "Start laad sessie",
+            "stop_session": "Stop laad sessie"
+        },
+        "condition_type": {
+            "available": "laadpunt is beschikbaar",
+            "charging": "laadpunt is aan het laden",
+            "error": "laadpunt heeft een error",
+            "no_power": "voertuig heeft geen power",
+            "offline": "laadpunt is offline",
+            "ready": "voertuig is ready",
+            "standby": "voertuig is in standby",
+            "unavailable": "laadpunt is onbeschikbaar",
+            "vehicle_detected": "voertuig is gedetecteerd",
+            "vehicle_error": "voertuig heeft een error",
+            "with_ventilation": "voertuig heeft ventilatie"
+        },
+        "trigger_type": {
+            "available": "laadpunt wordt beschikbaar",
+            "charging": "laadpunt is begonnen met laden",
+            "error": "laadpunt heeft een error",
+            "no_power": "voertuig  heeft geen power",
+            "offline": "laadpunt is offline",
+            "ready": "voertuig is ready",
+            "standby": "voertuig is in standby",
+            "unavailable": "laadpunt wordt onbeschikbaar",
+            "vehicle_detected": "voertuig is gedetecteerd",
+            "vehicle_error": "voertuig heeft een error",
+            "with_ventilation": "voertuig heeft ventilatie"
+        }
     }
 }

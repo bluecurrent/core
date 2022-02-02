@@ -25,5 +25,33 @@
                 "title": "Authentication"
             }
         }
+    },
+    "device_automation": {
+        "condition_type": {
+            "available": "charge point is available",
+            "charging": "charge point is charging",
+            "error": "charge point has error",
+            "no_power": "vehicle has no power",
+            "offline": "charge point is offline",
+            "ready": "vehicle is ready",
+            "standby": "vehicle is in standby",
+            "unavailable": "charge point is unavailable",
+            "vehicle_detected": "vehicle is detected",
+            "vehicle_error": "vehicle has error",
+            "with_ventilation": "vehicle has ventilation"
+        },
+        "trigger_type": {
+            "available": "charge point becomes available",
+            "charging": "charge point started charging",
+            "error": "charge point has error",
+            "no_power": "vehicle has no power",
+            "offline": "charge point is offline",
+            "ready": "vehicle is ready",
+            "standby": "vehicle is in standby",
+            "unavailable": "charge point becomes unavailable",
+            "vehicle_detected": "vehicle is detected",
+            "vehicle_error": "vehicle has error",
+            "with_ventilation": "vehicle has ventilation"
+        }
     }
 }
