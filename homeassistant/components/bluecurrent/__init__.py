@@ -134,7 +134,7 @@ class Connector:
         await self.client.get_charge_points()
 
     async def on_data(self, message: dict) -> None:
-        """Define a handler to handle received data."""
+        """Handle received data."""
 
         async def handle_charge_points(data: list) -> None:
             """Loop over the charge points and get their data."""
@@ -180,12 +180,12 @@ class Connector:
             self.update_charge_point(evse_id, new_data)
 
     async def get_charge_point_data(self, evse_id: str) -> None:
-        """Get all the data of the charge point."""
+        """Get all the data of a charge point."""
         await self.client.get_status(evse_id)
         await self.client.get_settings(evse_id)
 
     def add_charge_point(self, evse_id: str, model: str) -> None:
-        """Add a charge point to the dictionary."""
+        """Add a charge point to charge_points."""
         self.charge_points[evse_id] = {MODEL_TYPE: model}
 
     def update_charge_point(self, evse_id: str, data: dict) -> None:
@@ -214,13 +214,6 @@ class Connector:
             self.charge_points[evse_id][key] = data[key]
         self.dispatch_signal(evse_id)
 
-    def handle_success(self, success: bool, object_name: str) -> None:
-        """Log a message based on success."""
-        if success:
-            LOGGER.info(object_name, "success")
-        else:
-            LOGGER.warning(object_name, "unsuccessful")
-
     def dispatch_signal(self, evse_id: str | None = None) -> None:
         """Dispatch a signal."""
         if evse_id is not None:
@@ -241,7 +234,7 @@ class Connector:
 
             async_call_later(self._hass, DELAY, self.reconnect)
 
-    async def reconnect(self, event_time: datetime | None = None) -> None:
+    async def reconnect(self, _: datetime | None = None) -> None:
         """Keep trying to reconnect to the websocket."""
         try:
             await self.connect(self._config.data[CONF_API_TOKEN])

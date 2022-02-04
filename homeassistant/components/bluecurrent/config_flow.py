@@ -65,5 +65,5 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle a flow initiated by configuration file."""
+        """Handle a flow initiated by the configuration file."""
         return await self.async_step_user(user_input)
