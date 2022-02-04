@@ -167,13 +167,6 @@ class Connector:
     async def on_data(self, message: dict) -> None:
         """Handle received data."""
 
-        def handle_success(success: bool, object_name: str) -> None:
-            """Log a message based on success."""
-            if success:
-                LOGGER.debug(object_name, "was successful")
-            else:
-                LOGGER.warning(object_name, "was unsuccessful")
-
         async def handle_charge_points(data: list) -> None:
             """Loop over the charge points and get their data."""
             for entry in data:
@@ -219,8 +212,11 @@ class Connector:
 
         # service responses
         elif object_name in SERVICES:
+            state = "successful"
             success: bool = message[SUCCESS]
-            handle_success(success, object_name)
+            if not success:
+                state = "un" + state
+            LOGGER.debug("%s was %s ", object_name, state)
 
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all data of a charge point."""
