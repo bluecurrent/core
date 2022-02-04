@@ -69,12 +69,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 if user_input.get("add_card"):
                     return await self.async_step_card()
-                else:
-                    # maybe renamed to BCU_HA
-                    self.input[CARD] = "BCU_APP"
-                    return self.async_create_entry(
-                        title=user_input[CONF_API_TOKEN][:5], data=self.input
-                    )
+
+                self.input[CARD] = "BCU_APP"
+                return self.async_create_entry(
+                    title=user_input[CONF_API_TOKEN][:5], data=self.input
+                )
 
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
@@ -117,5 +116,5 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle a flow initiated by configuration file."""
+        """Handle a flow initiated by the configuration file."""
         return await self.async_step_user(user_input)
