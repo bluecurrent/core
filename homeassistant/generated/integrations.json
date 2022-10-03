@@ -560,6 +560,11 @@
       "config_flow": false,
       "iot_class": "cloud_polling"
     },
+    "bluecurrent": {
+      "config_flow": true,
+      "iot_class": "cloud_push",
+      "name": "BlueCurrent"
+    },
     "bluemaestro": {
       "name": "BlueMaestro",
       "integration_type": "hub",
