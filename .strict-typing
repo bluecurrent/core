@@ -65,6 +65,7 @@ homeassistant.components.awair.*
 homeassistant.components.backup.*
 homeassistant.components.baf.*
 homeassistant.components.binary_sensor.*
+homeassistant.components.bluecurrent.*
 homeassistant.components.bluetooth.*
 homeassistant.components.bluetooth_tracker.*
 homeassistant.components.bmw_connected_drive.*
