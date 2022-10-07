@@ -29,8 +29,8 @@ charge_point = {
     "stop_datetime": datetime.strptime("20211118 14:32:23+00:00", "%Y%m%d %H:%M:%S%z"),
     "offline_since": datetime.strptime("20211118 14:32:23+00:00", "%Y%m%d %H:%M:%S%z"),
     "total_cost": 13.32,
-    "total_current": 16,
-    "total_voltage": 15.7,
+    "avg_current": 16,
+    "avg_voltage": 15.7,
     "total_kw": 251.2,
     "vehicle_status": "offline",
     "actual_kwh": 11,
@@ -40,7 +40,8 @@ grid = {
     "grid_actual_p1": 12,
     "grid_actual_p2": 14,
     "grid_actual_p3": 15,
-    "grid_total_current": 13.7,
+    "grid_max_current": 15,
+    "grid_avg_current": 13.7,
 }
 
 
@@ -82,8 +83,8 @@ async def test_sensors(hass: HomeAssistant):
 async def test_sensor_update(hass: HomeAssistant):
     """Test if the sensors get updated when there is new data."""
     await init_integration(hass, "sensor", data, charge_point, grid)
-    key = "total_voltage"
-    grid_key = "grid_total_current"
+    key = "avg_voltage"
+    grid_key = "grid_avg_current"
     entity_registry = er.async_get(hass)
 
     connector: Connector = hass.data["bluecurrent"]["uuid"]

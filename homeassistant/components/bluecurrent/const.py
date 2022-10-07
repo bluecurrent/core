@@ -62,10 +62,10 @@ SENSORS = (
         entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
-        key="total_voltage",
+        key="avg_voltage",
         native_unit_of_measurement="V",
         device_class="voltage",
-        name="Total Voltage",
+        name="Average Voltage",
     ),
     SensorEntityDescription(
         key="actual_p1",
@@ -89,10 +89,10 @@ SENSORS = (
         entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
-        key="total_current",
+        key="avg_current",
         native_unit_of_measurement="A",
         device_class="current",
-        name="Total Current",
+        name="Average Current",
     ),
     SensorEntityDescription(
         key="total_kw",
@@ -168,10 +168,16 @@ GRID_SENSORS = (
         entity_registry_enabled_default=False,
     ),
     SensorEntityDescription(
-        key="grid_total_current",
+        key="grid_avg_current",
         native_unit_of_measurement="A",
         device_class="current",
-        name="Total Grid Current",
+        name="Average Grid Current",
+    ),
+    SensorEntityDescription(
+        key="grid_max_current",
+        native_unit_of_measurement="A",
+        device_class="current",
+        name="Max Grid Current",
     ),
 )
 
