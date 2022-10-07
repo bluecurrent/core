@@ -181,8 +181,9 @@ class Connector:
         # service responses
         elif object_name in SERVICES:
             name = object_name.lower()
+            evse_id = message[EVSE_ID]
             if success:
-                LOGGER.info("%s was successful ", name)
+                LOGGER.info("%s was successful for chargepoint: %s", name, evse_id)
 
             else:
                 LOGGER.error("%s", message[ERROR])
