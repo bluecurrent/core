@@ -27,12 +27,6 @@
         }
     },
     "device_automation": {
-        "action_type": {
-            "reboot": "Reboot laadpunt",
-            "reset": "Reset laadpunt",
-            "start_session": "Start laad sessie",
-            "stop_session": "Stop laad sessie"
-        },
         "condition_type": {
             "available": "laadpunt is beschikbaar",
             "charging": "laadpunt is aan het laden",
