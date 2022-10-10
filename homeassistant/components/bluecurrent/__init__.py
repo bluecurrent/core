@@ -176,13 +176,14 @@ class Connector:
             key = object_name.lower()
             result = message[RESULT]
             new_data = {key: result}
+            LOGGER.info("%s for chargepoint: %s was set to %s", key, evse_id, result)
             self.update_charge_point(evse_id, new_data)
 
         # service responses
         elif object_name in SERVICES:
             name = object_name.lower()
-            evse_id = message[EVSE_ID]
             if success:
+                evse_id = message[EVSE_ID]
                 LOGGER.info("%s was successful for chargepoint: %s", name, evse_id)
 
             else:
