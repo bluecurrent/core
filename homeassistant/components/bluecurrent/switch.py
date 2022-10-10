@@ -62,13 +62,11 @@ class ChargePointSwitch(BlueCurrentEntity, SwitchEntity):
         """Turn the entity on."""
         await self.call_function(True)
         self._attr_is_on = True
-        self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         await self.call_function(False)
         self._attr_is_on = False
-        self.async_write_ha_state()
 
     @callback
     def update_from_latest_data(self) -> None:
