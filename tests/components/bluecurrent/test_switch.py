@@ -41,7 +41,7 @@ async def test_switches(hass: HomeAssistant):
         assert entry
         assert entry.unique_id == f"{key}_101"
 
-    # availabile
+    # test if availiblity is unavailable
     switches = er.async_entries_for_config_entry(entity_registry, "uuid")
     assert len(charge_point.keys()) == len(switches) - 1
 

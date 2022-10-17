@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BlueCurrentEntity, Connector
-from .const import DOMAIN, GRID_SENSORS, SENSORS
+from .const import DOMAIN, GRID_SENSORS, SENSORS, TIMESTAMP_KEYS
 
 PARALLEL_UPDATES = 1
 
@@ -63,5 +63,5 @@ class BlueCurrentSensor(BlueCurrentEntity, SensorEntity):
         if new_value is not None:
             self._attr_available = True
             self._attr_native_value = new_value
-        else:
+        elif self._key not in TIMESTAMP_KEYS or self._attr_native_value is None:
             self._attr_available = False

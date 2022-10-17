@@ -84,12 +84,12 @@ async def test_sensor_update(hass: HomeAssistant):
     """Test if the sensors get updated when there is new data."""
     await init_integration(hass, "sensor", data, charge_point, grid)
     key = "avg_voltage"
+    timestamp_key = "start_datetime"
     grid_key = "grid_avg_current"
-    entity_registry = er.async_get(hass)
 
     connector: Connector = hass.data["bluecurrent"]["uuid"]
 
-    connector.charge_points = {"101": {key: 20}}
+    connector.charge_points = {"101": {key: 20, timestamp_key: None}}
     connector.grid = {grid_key: 20}
     async_dispatcher_send(hass, "bluecurrent_value_update_101")
     async_dispatcher_send(hass, "bluecurrent_grid_update")
@@ -98,22 +98,21 @@ async def test_sensor_update(hass: HomeAssistant):
     state = hass.states.get(f"sensor.{key}_101")
     assert state is not None
     assert state.state == str(20)
-    entry = entity_registry.async_get(f"sensor.{key}_101")
-    assert entry
-    assert entry.unique_id == f"{key}_101"
 
     # grid
     state = hass.states.get(f"sensor.{grid_key}")
     assert state
     assert state.state == str(20)
-    entry = entity_registry.async_get(f"sensor.{grid_key}")
-    assert entry
-    assert entry.unique_id == f"{grid_key}"
 
     # test unavailable
     state = hass.states.get("sensor.actual_kwh_101")
     assert state
     assert state.state == "unavailable"
-    entry = entity_registry.async_get("sensor.actual_kwh_101")
-    assert entry
-    assert entry.unique_id == "actual_kwh_101"
+
+    # test if timestamp keeps old value
+    state = hass.states.get(f"sensor.{timestamp_key}_101")
+    assert state
+    assert (
+        datetime.strptime(state.state, "%Y-%m-%dT%H:%M:%S%z")
+        == charge_point[timestamp_key]
+    )
