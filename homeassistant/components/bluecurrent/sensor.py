@@ -61,7 +61,13 @@ class BlueCurrentSensor(BlueCurrentEntity, SensorEntity):
             new_value = self._connector.charge_points[self._evse_id].get(self._key)
 
         if new_value is not None:
+
+            if self._key in TIMESTAMP_KEYS and not (
+                self._attr_native_value is None or self._attr_native_value < new_value
+            ):
+                return
             self._attr_available = True
             self._attr_native_value = new_value
-        elif self._key not in TIMESTAMP_KEYS or self._attr_native_value is None:
+
+        elif self._key not in TIMESTAMP_KEYS:
             self._attr_available = False

@@ -132,7 +132,6 @@ class Connector:
 
     async def connect(self, token: str) -> None:
         """Register on_data and connect to the websocket."""
-        self.client.set_receiver(self.on_data)
         await self.client.connect(token)
 
     async def on_data(self, message: dict) -> None:
@@ -224,7 +223,7 @@ class Connector:
     async def start_loop(self) -> None:
         """Start the receive loop."""
         try:
-            await self.client.start_loop()
+            await self.client.start_loop(self.on_data)
         except (WebsocketException) as err:
             LOGGER.warning(
                 "Disconnected from the Blue Current websocket. Retrying to connect in background. %s",

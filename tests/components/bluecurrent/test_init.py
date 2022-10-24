@@ -230,7 +230,7 @@ async def test_on_data(hass: HomeAssistant):
 async def test_reconnect(hass: HomeAssistant):
     """Tests reconnect."""
 
-    with patch("bluecurrent_api.Client.set_receiver"), patch(
+    with patch("bluecurrent_api.Client.connect"), patch(
         "bluecurrent_api.Client.connect", side_effect=WebsocketException
     ), patch(
         "homeassistant.components.bluecurrent.async_call_later"
