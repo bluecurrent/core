@@ -116,3 +116,19 @@ async def test_sensor_update(hass: HomeAssistant):
         datetime.strptime(state.state, "%Y-%m-%dT%H:%M:%S%z")
         == charge_point[timestamp_key]
     )
+
+    # test if older timestamp is ignored
+    connector.charge_points = {
+        "101": {
+            timestamp_key: datetime.strptime(
+                "20211118 14:11:23+08:00", "%Y%m%d %H:%M:%S%z"
+            )
+        }
+    }
+    async_dispatcher_send(hass, "bluecurrent_value_update_101")
+    state = hass.states.get(f"sensor.{timestamp_key}_101")
+    assert state
+    assert (
+        datetime.strptime(state.state, "%Y-%m-%dT%H:%M:%S%z")
+        == charge_point[timestamp_key]
+    )
