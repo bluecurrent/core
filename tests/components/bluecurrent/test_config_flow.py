@@ -6,6 +6,7 @@ from homeassistant.components.bluecurrent import DOMAIN
 from homeassistant.components.bluecurrent.config_flow import (
     InvalidApiToken,
     NoCardsFound,
+    RequestLimitReached,
     WebsocketException,
 )
 from homeassistant.core import HomeAssistant
@@ -94,6 +95,20 @@ async def test_form_invalid_token(hass: HomeAssistant) -> None:
         assert result["errors"] == {"base": "invalid_token"}
 
 
+async def test_form_limit_reached(hass: HomeAssistant) -> None:
+    """Test if an invalid api token is handled."""
+    with patch(
+        "bluecurrent_api.Client.validate_api_token",
+        side_effect=RequestLimitReached,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+            data={"api_token": "123"},
+        )
+        assert result["errors"] == {"base": "limit_reached"}
+
+
 async def test_form_exception(hass: HomeAssistant) -> None:
     """Test if an exception is handled."""
     with patch(
@@ -153,3 +168,17 @@ async def test_form_cannot_connect_card(hass: HomeAssistant) -> None:
         )
 
         assert result["errors"] == {"base": "cannot_connect"}
+
+
+async def test_form_limit_reached_card(hass: HomeAssistant) -> None:
+    """Test if an invalid api token is handled."""
+    with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_charge_cards",
+        side_effect=RequestLimitReached,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+            data={"api_token": "123", "add_card": True},
+        )
+        assert result["errors"] == {"base": "limit_reached"}

@@ -5,7 +5,11 @@ from datetime import datetime
 from typing import Any
 
 from bluecurrent_api import Client
-from bluecurrent_api.exceptions import InvalidApiToken, WebsocketException
+from bluecurrent_api.exceptions import (
+    InvalidApiToken,
+    RequestLimitReached,
+    WebsocketException,
+)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP
@@ -224,13 +228,18 @@ class Connector:
         """Start the receive loop."""
         try:
             await self.client.start_loop(self.on_data)
-        except (WebsocketException) as err:
+        except (WebsocketException, RequestLimitReached) as err:
             LOGGER.warning(
                 "Disconnected from the Blue Current websocket. Retrying to connect in background. %s",
                 err,
             )
 
-            async_call_later(self._hass, DELAY_1, self.reconnect)
+            if isinstance(err, RequestLimitReached):
+                delay = self.client.get_next_reset_delta()
+            else:
+                delay = DELAY_1
+
+            async_call_later(self._hass, delay, self.reconnect)
 
     async def reconnect(self, event_time: datetime | None = None) -> None:
         """Keep trying to reconnect to the websocket."""

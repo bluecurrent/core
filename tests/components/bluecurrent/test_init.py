@@ -1,9 +1,10 @@
 """Test BlueCurrent Init Component."""
 
+from datetime import timedelta
 from unittest.mock import patch
 
 from bluecurrent_api.client import Client
-from bluecurrent_api.exceptions import WebsocketException
+from bluecurrent_api.exceptions import RequestLimitReached, WebsocketException
 import pytest
 
 from homeassistant.components.bluecurrent import (
@@ -225,6 +226,40 @@ async def test_on_data(hass: HomeAssistant):
         # test REBOOT
         data8 = {"object": "STATUS_REBOOT", "success": False}
         await connector.on_data(data8)
+
+
+async def test_start_loop(hass: HomeAssistant):
+    """Tests start_loop."""
+
+    with patch(
+        "bluecurrent_api.Client.get_next_reset_delta", return_value=timedelta(hours=1)
+    ), patch(
+        "homeassistant.components.bluecurrent.async_call_later"
+    ) as test_async_call_later:
+
+        config_entry = MockConfigEntry(
+            domain=DOMAIN,
+            entry_id="uuid",
+            unique_id="uuid",
+            data={"api_token": "123", "card": {"123"}},
+        )
+
+        connector = Connector(hass, config_entry, Client)
+
+        with patch(
+            "bluecurrent_api.Client.start_loop",
+            side_effect=WebsocketException("unknown command"),
+        ):
+            await connector.start_loop()
+            test_async_call_later.assert_called_with(hass, 1, connector.reconnect)
+
+        with patch(
+            "bluecurrent_api.Client.start_loop", side_effect=RequestLimitReached
+        ):
+            await connector.start_loop()
+            test_async_call_later.assert_called_with(
+                hass, timedelta(hours=1), connector.reconnect
+            )
 
 
 async def test_reconnect(hass: HomeAssistant):

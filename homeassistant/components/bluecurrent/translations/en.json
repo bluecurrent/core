@@ -6,6 +6,8 @@
         "error": {
             "cannot_connect": "Failed to connect",
             "invalid_token": "Invalid token",
+            "limit_reached": "Request limit reached",
+            "no_cards_found": "No charge cards found",
             "unknown": "Unexpected error"
         },
         "step": {

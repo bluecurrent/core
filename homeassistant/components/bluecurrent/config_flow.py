@@ -1,20 +1,22 @@
 """Config flow for BlueCurrent integration."""
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from bluecurrent_api import Client
-from bluecurrent_api.exceptions import InvalidApiToken, NoCardsFound, WebsocketException
+from bluecurrent_api.exceptions import (
+    InvalidApiToken,
+    NoCardsFound,
+    RequestLimitReached,
+    WebsocketException,
+)
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_API_TOKEN, CONF_NAME
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import CARD, DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
+from .const import CARD, DOMAIN, LOGGER
 
 DATA_SCHEMA = vol.Schema(
     {vol.Required(CONF_API_TOKEN): str, vol.Optional("add_card"): bool}
@@ -58,10 +60,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await validate_input(self.client, api_token)
             except WebsocketException:
                 errors["base"] = "cannot_connect"
+            except RequestLimitReached:
+                errors["base"] = "limit_reached"
             except InvalidApiToken:
                 errors["base"] = "invalid_token"
             except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
+                LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
 
             if not errors:
@@ -91,6 +95,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.cards = await get_charge_cards(self.client)
             except WebsocketException:
                 errors["base"] = "cannot_connect"
+            except RequestLimitReached:
+                errors["base"] = "limit_reached"
             except NoCardsFound:
                 errors["base"] = "no_cards_found"
 

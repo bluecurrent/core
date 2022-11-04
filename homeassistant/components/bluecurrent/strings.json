@@ -19,7 +19,9 @@
     },
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "limit_reached": "Request limit reached",
       "invalid_token": "Invalid token",
+      "no_cards_found": "No charge cards found",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {

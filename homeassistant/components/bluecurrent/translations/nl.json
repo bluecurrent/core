@@ -5,7 +5,9 @@
         },
         "error": {
             "cannot_connect": "Kan geen verbinding maken",
+            "limit_reached": "Request limiet bereikt",
             "invalid_token": "Ongeldig token",
+            "no_cards_found": "Geen laadpassen gevonden",
             "unknown": "Onverwachte fout"
         },
         "step": {
