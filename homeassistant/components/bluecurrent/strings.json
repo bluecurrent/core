@@ -22,6 +22,7 @@
       "limit_reached": "Request limit reached",
       "invalid_token": "Invalid token",
       "no_cards_found": "No charge cards found",
+      "already_connected": "IP is already connected",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {

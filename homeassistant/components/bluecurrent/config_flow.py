@@ -5,6 +5,7 @@ from typing import Any
 
 from bluecurrent_api import Client
 from bluecurrent_api.exceptions import (
+    AlreadyConnected,
     InvalidApiToken,
     NoCardsFound,
     RequestLimitReached,
@@ -62,6 +63,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except RequestLimitReached:
                 errors["base"] = "limit_reached"
+            except AlreadyConnected:
+                errors["base"] = "already_connected"
             except InvalidApiToken:
                 errors["base"] = "invalid_token"
             except Exception:  # pylint: disable=broad-except
@@ -97,6 +100,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             except RequestLimitReached:
                 errors["base"] = "limit_reached"
+            except AlreadyConnected:
+                errors["base"] = "already_connected"
             except NoCardsFound:
                 errors["base"] = "no_cards_found"
 
