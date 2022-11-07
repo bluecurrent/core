@@ -6,7 +6,7 @@ from typing import Any
 
 from bluecurrent_api import Client
 from bluecurrent_api.exceptions import (
-    InvalidApiToken,
+    BlueCurrentException,
     RequestLimitReached,
     WebsocketException,
 )
@@ -59,7 +59,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     connector = Connector(hass, config_entry, client)
     try:
         await connector.connect(api_token)
-    except (WebsocketException, InvalidApiToken) as err:
+    except (BlueCurrentException) as err:
         LOGGER.error("Config entry failed: %s", err)
         raise ConfigEntryNotReady from err
 
@@ -228,18 +228,12 @@ class Connector:
         """Start the receive loop."""
         try:
             await self.client.start_loop(self.on_data)
-        except (WebsocketException, RequestLimitReached) as err:
+        except (BlueCurrentException) as err:
             LOGGER.warning(
                 "Disconnected from the Blue Current websocket. Retrying to connect in background. %s",
                 err,
             )
-
-            if isinstance(err, RequestLimitReached):
-                delay = self.client.get_next_reset_delta()
-            else:
-                delay = DELAY_1
-
-            async_call_later(self._hass, delay, self.reconnect)
+            async_call_later(self._hass, DELAY_1, self.reconnect)
 
     async def reconnect(self, event_time: datetime | None = None) -> None:
         """Keep trying to reconnect to the websocket."""
@@ -248,9 +242,13 @@ class Connector:
             LOGGER.warning("Reconnected to the Blue Current websocket")
             self._hass.loop.create_task(self.start_loop())
             await self.client.get_charge_points()
-        except WebsocketException:
+        except (WebsocketException, RequestLimitReached) as err:
             set_entities_unavalible(self._hass, self._config.entry_id)
-            async_call_later(self._hass, DELAY_2, self.reconnect)
+            if isinstance(err, RequestLimitReached):
+                delay = self.client.get_next_reset_delta()
+            else:
+                delay = DELAY_2
+            async_call_later(self._hass, delay, self.reconnect)
 
     async def disconnect(self) -> None:
         """Disconnect from the websocket."""

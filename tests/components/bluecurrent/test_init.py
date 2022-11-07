@@ -232,8 +232,6 @@ async def test_start_loop(hass: HomeAssistant):
     """Tests start_loop."""
 
     with patch(
-        "bluecurrent_api.Client.get_next_reset_delta", return_value=timedelta(hours=1)
-    ), patch(
         "homeassistant.components.bluecurrent.async_call_later"
     ) as test_async_call_later:
 
@@ -257,9 +255,7 @@ async def test_start_loop(hass: HomeAssistant):
             "bluecurrent_api.Client.start_loop", side_effect=RequestLimitReached
         ):
             await connector.start_loop()
-            test_async_call_later.assert_called_with(
-                hass, timedelta(hours=1), connector.reconnect
-            )
+            test_async_call_later.assert_called_with(hass, 1, connector.reconnect)
 
 
 async def test_reconnect(hass: HomeAssistant):
@@ -267,6 +263,8 @@ async def test_reconnect(hass: HomeAssistant):
 
     with patch("bluecurrent_api.Client.connect"), patch(
         "bluecurrent_api.Client.connect", side_effect=WebsocketException
+    ), patch(
+        "bluecurrent_api.Client.get_next_reset_delta", return_value=timedelta(hours=1)
     ), patch(
         "homeassistant.components.bluecurrent.async_call_later"
     ) as test_async_call_later:
@@ -282,3 +280,9 @@ async def test_reconnect(hass: HomeAssistant):
         await connector.reconnect()
 
         test_async_call_later.assert_called_with(hass, 20, connector.reconnect)
+
+        with patch("bluecurrent_api.Client.connect", side_effect=RequestLimitReached):
+            await connector.reconnect()
+            test_async_call_later.assert_called_with(
+                hass, timedelta(hours=1), connector.reconnect
+            )
