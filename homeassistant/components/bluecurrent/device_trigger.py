@@ -58,7 +58,7 @@ async def async_get_triggers(
 ) -> list[dict[str, Any]]:
     """List device triggers for BlueCurrent devices."""
     triggers = []
-    registry = await device_registry.async_get_registry(hass)
+    registry = device_registry.async_get(hass)
     device = registry.async_get(device_id)
 
     assert device is not None

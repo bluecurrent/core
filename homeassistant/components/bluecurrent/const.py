@@ -143,6 +143,26 @@ SENSORS = (
         icon="mdi:ev-station",
         device_class="bluecurrent__activity",
     ),
+    SensorEntityDescription(
+        key="max_usage",
+        name="Max usage",
+        icon="mdi:gauge-full",
+        native_unit_of_measurement="A",
+    ),
+    SensorEntityDescription(
+        key="smartcharging_max_usage",
+        name="Max usage when smartcharging",
+        icon="mdi:gauge-full",
+        native_unit_of_measurement="A",
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
+        key="max_offline",
+        name="Max usage when offline",
+        icon="mdi:gauge-full",
+        native_unit_of_measurement="A",
+        entity_registry_enabled_default=False,
+    ),
 )
 
 GRID_SENSORS = (

@@ -34,6 +34,9 @@ charge_point = {
     "total_kw": 251.2,
     "vehicle_status": "offline",
     "actual_kwh": 11,
+    "max_usage": 10,
+    "max_offline": 7,
+    "smartcharging_max_usage": 6,
 }
 
 grid = {
