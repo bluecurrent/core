@@ -4,6 +4,7 @@ from unittest.mock import patch
 from homeassistant import config_entries
 from homeassistant.components.bluecurrent import DOMAIN
 from homeassistant.components.bluecurrent.config_flow import (
+    AlreadyConnected,
     InvalidApiToken,
     NoCardsFound,
     RequestLimitReached,
@@ -96,7 +97,7 @@ async def test_form_invalid_token(hass: HomeAssistant) -> None:
 
 
 async def test_form_limit_reached(hass: HomeAssistant) -> None:
-    """Test if an invalid api token is handled."""
+    """Test if an limit reached error is handled."""
     with patch(
         "bluecurrent_api.Client.validate_api_token",
         side_effect=RequestLimitReached,
@@ -107,6 +108,20 @@ async def test_form_limit_reached(hass: HomeAssistant) -> None:
             data={"api_token": "123"},
         )
         assert result["errors"] == {"base": "limit_reached"}
+
+
+async def test_form_already_connected(hass: HomeAssistant) -> None:
+    """Test if an already connected error is handled."""
+    with patch(
+        "bluecurrent_api.Client.validate_api_token",
+        side_effect=AlreadyConnected,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+            data={"api_token": "123"},
+        )
+        assert result["errors"] == {"base": "already_connected"}
 
 
 async def test_form_exception(hass: HomeAssistant) -> None:
@@ -171,7 +186,7 @@ async def test_form_cannot_connect_card(hass: HomeAssistant) -> None:
 
 
 async def test_form_limit_reached_card(hass: HomeAssistant) -> None:
-    """Test if an invalid api token is handled."""
+    """Test if an limit reached error is handled."""
     with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
         "bluecurrent_api.Client.get_charge_cards",
         side_effect=RequestLimitReached,
@@ -182,3 +197,17 @@ async def test_form_limit_reached_card(hass: HomeAssistant) -> None:
             data={"api_token": "123", "add_card": True},
         )
         assert result["errors"] == {"base": "limit_reached"}
+
+
+async def test_form_already_connected_card(hass: HomeAssistant) -> None:
+    """Test if an already connected error is handled."""
+    with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_charge_cards",
+        side_effect=AlreadyConnected,
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": config_entries.SOURCE_USER},
+            data={"api_token": "123", "add_card": True},
+        )
+        assert result["errors"] == {"base": "already_connected"}
