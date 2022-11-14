@@ -37,6 +37,7 @@ charge_point = {
     "max_usage": 10,
     "max_offline": 7,
     "smartcharging_max_usage": 6,
+    "current_left": 10,
 }
 
 grid = {
