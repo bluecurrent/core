@@ -3,7 +3,7 @@
   "name": "BlueCurrent",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/bluecurrent",
-  "requirements": [],
+  "requirements": ["bluecurrent-api==1.0.1"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
