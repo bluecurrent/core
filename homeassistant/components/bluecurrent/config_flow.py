@@ -1,6 +1,7 @@
 """Config flow for BlueCurrent integration."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from bluecurrent_api import Client
@@ -29,6 +30,12 @@ async def validate_input(client: Client, api_token: str) -> None:
     await client.validate_api_token(api_token)
 
 
+async def get_email(client: Client) -> str:
+    """Validate the user input allows us to connect."""
+    email: str = await client.get_email()
+    return email
+
+
 async def get_charge_cards(client: Client) -> list:
     """Validate the user input allows us to connect."""
     cards: list = await client.get_charge_cards()
@@ -43,6 +50,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     input: dict[str, Any] = {}
     cards: list = []
     client = Client()
+    entry: config_entries.ConfigEntry | None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -53,12 +61,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
 
             api_token = user_input[CONF_API_TOKEN]
-
-            await self.async_set_unique_id(api_token)
-            self._abort_if_unique_id_configured()
+            self._async_abort_entries_match({CONF_API_TOKEN: api_token})
 
             try:
                 await validate_input(self.client, api_token)
+                email = await get_email(self.client)
             except WebsocketException:
                 errors["base"] = "cannot_connect"
             except RequestLimitReached:
@@ -72,12 +79,19 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
 
             if not errors:
+
+                self.entry = await self.async_set_unique_id(email)
                 self.input[CONF_API_TOKEN] = api_token
 
                 if user_input.get("add_card"):
                     return await self.async_step_card()
-
                 self.input[CARD] = "BCU_APP"
+
+                if self.entry:
+                    await self.update_entry()
+                    return self.async_abort(reason="reauth_successful")
+                self._abort_if_unique_id_configured()
+
                 return self.async_create_entry(
                     title=user_input[CONF_API_TOKEN][:5], data=self.input
                 )
@@ -118,6 +132,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 selected_card = list(filter(check_card, self.cards))[0]
 
                 self.input[CARD] = selected_card["uid"]
+
+                if self.entry:
+                    await self.update_entry()
+                    return self.async_abort(reason="reauth_successful")
+                self._abort_if_unique_id_configured()
+
                 return self.async_create_entry(title=api_token[:5], data=self.input)
 
             return self.async_show_form(step_id=CARD, data_schema=card_schema)
@@ -125,3 +145,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
+        """Handle a reauthorization flow request."""
+        return await self.async_step_user()
+
+    async def update_entry(self) -> None:
+        """Update the config entry."""
+        assert self.entry
+        self.hass.config_entries.async_update_entry(
+            self.entry, data=self.input, title=self.input["api_token"][:5]
+        )
+        await self.hass.config_entries.async_reload(self.entry.entry_id)

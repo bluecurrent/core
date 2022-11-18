@@ -7,6 +7,7 @@ from typing import Any
 from bluecurrent_api import Client
 from bluecurrent_api.exceptions import (
     BlueCurrentException,
+    InvalidApiToken,
     RequestLimitReached,
     WebsocketException,
 )
@@ -14,7 +15,7 @@ from bluecurrent_api.exceptions import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.dispatcher import (
     async_dispatcher_connect,
@@ -60,7 +61,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     try:
         await connector.connect(api_token)
     except (BlueCurrentException) as err:
-        LOGGER.error("Config entry failed: %s", err)
+        if isinstance(err, InvalidApiToken):
+            raise ConfigEntryAuthFailed("Invalid api token.") from err
         raise ConfigEntryNotReady from err
 
     hass.loop.create_task(connector.start_loop())

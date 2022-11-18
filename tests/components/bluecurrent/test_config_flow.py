@@ -10,7 +10,12 @@ from homeassistant.components.bluecurrent.config_flow import (
     RequestLimitReached,
     WebsocketException,
 )
+from homeassistant.config_entries import SOURCE_REAUTH
+from homeassistant.const import CONF_SOURCE
 from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
+
+from tests.common import MockConfigEntry
 
 
 async def test_form(hass: HomeAssistant) -> None:
@@ -29,7 +34,9 @@ async def test_default_card(hass: HomeAssistant) -> None:
     )
     assert result["errors"] == {}
 
-    with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+    with patch("bluecurrent_api.Client.validate_api_token", return_value=True), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
         "homeassistant.components.bluecurrent.async_setup_entry",
         return_value=True,
     ):
@@ -53,6 +60,8 @@ async def test_user_card(hass: HomeAssistant) -> None:
     assert result["errors"] == {}
 
     with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
         "bluecurrent_api.Client.get_charge_cards",
         return_value=[{"name": "card 1", "uid": 1}, {"name": "card 2", "uid": 2}],
     ), patch(
@@ -157,6 +166,8 @@ async def test_form_no_cards_found(hass: HomeAssistant) -> None:
     """Test if a no cards error is handled."""
 
     with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
         "bluecurrent_api.Client.get_charge_cards",
         side_effect=NoCardsFound,
     ):
@@ -173,6 +184,8 @@ async def test_form_cannot_connect_card(hass: HomeAssistant) -> None:
     """Test if a connection error on get_charge_cards is handled."""
 
     with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
         "bluecurrent_api.Client.get_charge_cards",
         side_effect=WebsocketException,
     ):
@@ -188,6 +201,8 @@ async def test_form_cannot_connect_card(hass: HomeAssistant) -> None:
 async def test_form_limit_reached_card(hass: HomeAssistant) -> None:
     """Test if an limit reached error is handled."""
     with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
         "bluecurrent_api.Client.get_charge_cards",
         side_effect=RequestLimitReached,
     ):
@@ -202,6 +217,8 @@ async def test_form_limit_reached_card(hass: HomeAssistant) -> None:
 async def test_form_already_connected_card(hass: HomeAssistant) -> None:
     """Test if an already connected error is handled."""
     with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
         "bluecurrent_api.Client.get_charge_cards",
         side_effect=AlreadyConnected,
     ):
@@ -211,3 +228,79 @@ async def test_form_already_connected_card(hass: HomeAssistant) -> None:
             data={"api_token": "123", "add_card": True},
         )
         assert result["errors"] == {"base": "already_connected"}
+
+
+async def test_flow_reauth(hass: HomeAssistant):
+    """Test reauth step."""
+    with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch("bluecurrent_api.Client.get_charge_cards"):
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            entry_id="uuid",
+            unique_id="test@email.com",
+            data={"api_token": "123", "card": {"123"}},
+        )
+        entry.add_to_hass(hass)
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={
+                CONF_SOURCE: SOURCE_REAUTH,
+                "entry_id": entry.entry_id,
+                "unique_id": entry.unique_id,
+            },
+            data={"api_token": "abc", "card": {"abc"}},
+        )
+
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "user"
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            user_input={"api_token": "1234567890", "add_card": False},
+        )
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "reauth_successful"
+        assert entry.data.copy() == {"api_token": "1234567890", "card": "BCU_APP"}
+
+
+async def test_flow_reauth_card(hass: HomeAssistant):
+    """Test reauth step."""
+    with patch("bluecurrent_api.Client.validate_api_token", return_value=True,), patch(
+        "bluecurrent_api.Client.get_email", return_value="test@email.com"
+    ), patch(
+        "bluecurrent_api.Client.get_charge_cards",
+        return_value=[{"name": "card 1", "uid": 1}, {"name": "card 2", "uid": 2}],
+    ):
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            entry_id="uuid",
+            unique_id="test@email.com",
+            data={"api_token": "123", "card": {"123"}},
+        )
+        entry.add_to_hass(hass)
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={
+                CONF_SOURCE: SOURCE_REAUTH,
+                "entry_id": entry.entry_id,
+                "unique_id": entry.unique_id,
+            },
+            data={"api_token": "abc", "card": {"abc"}},
+        )
+
+        assert result["type"] == FlowResultType.FORM
+        assert result["step_id"] == "user"
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            user_input={"api_token": "1234567890", "add_card": True},
+        )
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {"card": "card 1"},
+        )
+        assert result["type"] == FlowResultType.ABORT
+        assert result["reason"] == "reauth_successful"
+        assert entry.data.copy() == {"api_token": "1234567890", "card": 1}
