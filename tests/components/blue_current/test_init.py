@@ -169,6 +169,81 @@ async def test_on_data(hass: HomeAssistant):
         }
         test_async_dispatcher_send.assert_called_with(hass, "blue_current_grid_update")
 
+        # reset charge_point
+        connector.charge_points["101"] = {}
+
+        # test CH_SETTINGS
+        data = {
+            "object": "CH_SETTINGS",
+            "data": {
+                "available": False,
+                "plug_and_charge": False,
+                "public_charging": False,
+                "evse_id": "101",
+            },
+        }
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": False,
+                "plug_and_charge": False,
+                "public_charging": False,
+                "ch_activity": "unavailable",
+            }
+        }
+        test_async_dispatcher_send.assert_called_with(
+            hass, "blue_current_value_update_101"
+        )
+
+        # test PUBLIC_CHARGING
+        data = {"object": "PUBLIC_CHARGING", "result": True, "evse_id": "101"}
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": False,
+                "plug_and_charge": False,
+                "public_charging": True,
+                "ch_activity": "unavailable",
+            }
+        }
+        test_async_dispatcher_send.assert_called_with(
+            hass, "blue_current_value_update_101"
+        )
+
+        # test AVAILABLE
+        data = {"object": "AVAILABLE", "result": True, "evse_id": "101"}
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": True,
+                "plug_and_charge": False,
+                "public_charging": True,
+                "ch_activity": "available",
+            }
+        }
+        test_async_dispatcher_send.assert_called_with(
+            hass, "blue_current_value_update_101"
+        )
+
+        # test PLUG_AND_CHARGE
+        data = {"object": "PLUG_AND_CHARGE", "result": True, "evse_id": "101"}
+        await connector.on_data(data)
+        assert connector.charge_points == {
+            "101": {
+                "available": True,
+                "plug_and_charge": True,
+                "public_charging": True,
+                "ch_activity": "available",
+            }
+        }
+        test_async_dispatcher_send.assert_called_with(
+            hass, "blue_current_value_update_101"
+        )
+
+        # test ERROR
+        data = {"object": "REBOOT", "success": False, "error": "error"}
+        assert await connector.on_data(data) is None
+
 
 async def test_start_loop(hass: HomeAssistant):
     """Tests start_loop."""

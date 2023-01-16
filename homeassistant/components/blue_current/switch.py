@@ -1,40 +1,64 @@
 """Support for Blue Current switches."""
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from typing import Any
 
 from bluecurrent_api import Client
 
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import (
+    SwitchDeviceClass,
+    SwitchEntity,
+    SwitchEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ICON, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import BlueCurrentEntity, Connector
 from .const import DOMAIN, LOGGER
 
-KEY = "key"
-FUNCTION = "function"
+
+@dataclass
+class BlueCurrentSwitchEntityDescriptionMixin:
+    """Mixin for the called functions."""
+
+    function: Callable[[Client, str, bool], Awaitable]
+
+
+@dataclass
+class BlueCurrentSwitchEntityDescription(
+    SwitchEntityDescription, BlueCurrentSwitchEntityDescriptionMixin
+):
+    """Describes Blue Current switch entity."""
+
+
 SWITCHES = (
-    {
-        KEY: "plug_and_charge",
-        FUNCTION: Client.set_plug_and_charge,
-        CONF_NAME: "Plug and charge",
-        CONF_ICON: "mdi:ev-plug-type2",
-    },
-    {
-        KEY: "public_charging",
-        FUNCTION: Client.set_public_charging,
-        CONF_NAME: "Public charging",
-        CONF_ICON: "mdi:account-group",
-    },
-    {
-        KEY: "available",
-        FUNCTION: Client.set_operative,
-        CONF_NAME: "Available",
-        CONF_ICON: "mdi:power",
-    },
+    BlueCurrentSwitchEntityDescription(
+        key="plug_and_charge",
+        device_class=SwitchDeviceClass.SWITCH,
+        name="Plug and charge",
+        icon="mdi:ev-plug-type2",
+        function=Client.set_plug_and_charge,
+        has_entity_name=True,
+    ),
+    BlueCurrentSwitchEntityDescription(
+        key="public_charging",
+        device_class=SwitchDeviceClass.SWITCH,
+        name="Public charging",
+        icon="mdi:account-group",
+        function=Client.set_public_charging,
+        has_entity_name=True,
+    ),
+    BlueCurrentSwitchEntityDescription(
+        key="available",
+        device_class=SwitchDeviceClass.SWITCH,
+        name="Available",
+        icon="mdi:power",
+        function=Client.set_operative,
+        has_entity_name=True,
+    ),
 )
 
 
@@ -63,22 +87,27 @@ class ChargePointSwitch(BlueCurrentEntity, SwitchEntity):
 
     _attr_should_poll = False
 
+    entity_description: BlueCurrentSwitchEntityDescription
+
     def __init__(
-        self, connector: Connector, evse_id: str, switch: dict[str, Any]
+        self,
+        connector: Connector,
+        evse_id: str,
+        switch: BlueCurrentSwitchEntityDescription,
     ) -> None:
         """Initialize the switch."""
         super().__init__(connector, evse_id)
 
-        self._attr_icon = switch[CONF_ICON]
-        self._function = switch[FUNCTION]
-        self._key = switch[KEY]
-        self._attr_unique_id = f"{switch[KEY]}_{evse_id}"
-        self.entity_id = f"switch.{switch[KEY]}_{evse_id}"
+        self.key = switch.key
+        self.entity_description = switch
+        self._attr_unique_id = f"{switch.key}_{evse_id}"
 
     async def call_function(self, value: bool) -> None:
         """Call the function to set setting."""
         try:
-            await self._function(self.connector.client, self.evse_id, value)
+            await self.entity_description.function(
+                self.connector.client, self.evse_id, value
+            )
         except ConnectionError:
             LOGGER.error("No connection")
 
@@ -95,7 +124,7 @@ class ChargePointSwitch(BlueCurrentEntity, SwitchEntity):
     @callback
     def update_from_latest_data(self) -> None:
         """Fetch new state data for the switch."""
-        new_value = self.connector.charge_points[self.evse_id].get(self._key)
+        new_value = self.connector.charge_points[self.evse_id].get(self.key)
         if new_value is not None:
             self._attr_available = True
             self._attr_is_on = new_value
