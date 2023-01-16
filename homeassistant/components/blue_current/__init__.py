@@ -35,7 +35,12 @@ EVSE_ID = "evse_id"
 GRID_STATUS = "GRID_STATUS"
 MODEL_TYPE = "model_type"
 OBJECT = "object"
-VALUE_TYPES = ["CH_STATUS"]
+VALUE_TYPES = ["CH_STATUS", "CH_SETTINGS"]
+SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
+RESULT = "result"
+ACTIVITY = "ch_activity"
+AVAILABLE = "available"
+UNAVAILABLE = "unavailable"
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -135,9 +140,18 @@ class Connector:
             self.grid = data
             self.dispatch_grid_update_signal()
 
+        # setting change responses
+        elif object_name in SETTINGS:
+            evse_id = message.pop(EVSE_ID)
+            key = object_name.lower()
+            result = message[RESULT]
+            new_data = {key: result}
+            self.update_charge_point(evse_id, new_data)
+
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of a charge point."""
         await self.client.get_status(evse_id)
+        await self.client.get_settings(evse_id)
 
     def add_charge_point(self, evse_id: str, model: str) -> None:
         """Add a charge point to charge_points."""
@@ -145,6 +159,27 @@ class Connector:
 
     def update_charge_point(self, evse_id: str, data: dict) -> None:
         """Update the charge point data."""
+
+        def handle_activity(data: dict) -> None:
+            activity = data.get(ACTIVITY)
+            if activity == AVAILABLE:
+                data[AVAILABLE] = True
+            else:
+                data[AVAILABLE] = False
+
+        def handle_available(data: dict) -> None:
+            available = data.get(AVAILABLE)
+            if available:
+                data[ACTIVITY] = AVAILABLE
+
+            else:
+                data[ACTIVITY] = UNAVAILABLE
+
+        if AVAILABLE in data:
+            handle_available(data)
+        elif ACTIVITY in data:
+            handle_activity(data)
+
         self.charge_points[evse_id].update(data)
         self.dispatch_value_update_signal(evse_id)
 
