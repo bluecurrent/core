@@ -9,3 +9,6 @@ DOMAIN = "blue_current"
 LOGGER = logging.getLogger(__package__)
 
 PLATFORMS = [Platform.SENSOR]
+
+EVSE_ID = "evse_id"
+CARD = "card"
