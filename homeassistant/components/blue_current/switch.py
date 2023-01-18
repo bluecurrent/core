@@ -1,7 +1,7 @@
 """Support for Blue Current switches."""
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -24,7 +24,7 @@ from .const import DOMAIN, LOGGER
 class BlueCurrentSwitchEntityDescriptionMixin:
     """Mixin for the called functions."""
 
-    function: Callable[[Client, str, bool], Awaitable]
+    function: Callable[[Client, str, bool], Any]
 
 
 @dataclass
@@ -34,13 +34,15 @@ class BlueCurrentSwitchEntityDescription(
     """Describes Blue Current switch entity."""
 
 
-SWITCHES = (
+SWITCHES: tuple[BlueCurrentSwitchEntityDescription, ...] = (
     BlueCurrentSwitchEntityDescription(
         key="plug_and_charge",
         device_class=SwitchDeviceClass.SWITCH,
         name="Plug and charge",
         icon="mdi:ev-plug-type2",
-        function=Client.set_plug_and_charge,
+        function=lambda client, evse_id, value: client.set_plug_and_charge(
+            evse_id, value
+        ),
         has_entity_name=True,
     ),
     BlueCurrentSwitchEntityDescription(
@@ -48,7 +50,9 @@ SWITCHES = (
         device_class=SwitchDeviceClass.SWITCH,
         name="Public charging",
         icon="mdi:account-group",
-        function=Client.set_public_charging,
+        function=lambda client, evse_id, value: client.set_public_charging(
+            evse_id, value
+        ),
         has_entity_name=True,
     ),
     BlueCurrentSwitchEntityDescription(
@@ -56,7 +60,7 @@ SWITCHES = (
         device_class=SwitchDeviceClass.SWITCH,
         name="Available",
         icon="mdi:power",
-        function=Client.set_operative,
+        function=lambda client, evse_id, value: client.set_operative(evse_id, value),
         has_entity_name=True,
     ),
 )

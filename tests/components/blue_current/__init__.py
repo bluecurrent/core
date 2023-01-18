@@ -13,12 +13,9 @@ from tests.common import MockConfigEntry
 
 
 async def init_integration(
-    hass: HomeAssistant, platform, data: dict, charge_point: dict, grid=None
+    hass: HomeAssistant, platform, data: dict, grid=None
 ) -> MockConfigEntry:
     """Set up the Blue Current integration in Home Assistant."""
-
-    if charge_point:
-        data["101"].update(charge_point)
 
     if grid is None:
         grid = {}
