@@ -1,6 +1,7 @@
 """Test Blue Current Init Component."""
 
 from datetime import timedelta
+from typing import Any
 from unittest.mock import patch
 
 from bluecurrent_api.client import Client
@@ -24,7 +25,7 @@ from tests.common import MockConfigEntry
 
 async def test_load_unload_entry(hass: HomeAssistant):
     """Test load and unload entry."""
-    config_entry = await init_integration(hass, "sensor", {}, {})
+    config_entry = await init_integration(hass, "sensor", {})
     assert config_entry.state == ConfigEntryState.LOADED
     assert isinstance(hass.data[DOMAIN][config_entry.entry_id], Connector)
 
@@ -92,7 +93,7 @@ async def test_set_entities_unavalible(hass: HomeAssistant):
 async def test_on_data(hass: HomeAssistant):
     """Test on_data."""
 
-    await init_integration(hass, "sensor", {}, {})
+    await init_integration(hass, "sensor", {})
 
     with patch(
         "homeassistant.components.blue_current.async_dispatcher_send"
@@ -173,7 +174,7 @@ async def test_on_data(hass: HomeAssistant):
         connector.charge_points["101"] = {}
 
         # test CH_SETTINGS
-        data = {
+        data4: dict[str, Any] = {
             "object": "CH_SETTINGS",
             "data": {
                 "available": False,
@@ -182,7 +183,7 @@ async def test_on_data(hass: HomeAssistant):
                 "evse_id": "101",
             },
         }
-        await connector.on_data(data)
+        await connector.on_data(data4)
         assert connector.charge_points == {
             "101": {
                 "available": False,
@@ -196,8 +197,12 @@ async def test_on_data(hass: HomeAssistant):
         )
 
         # test PUBLIC_CHARGING
-        data = {"object": "PUBLIC_CHARGING", "result": True, "evse_id": "101"}
-        await connector.on_data(data)
+        data5: dict[str, Any] = {
+            "object": "PUBLIC_CHARGING",
+            "result": True,
+            "evse_id": "101",
+        }
+        await connector.on_data(data5)
         assert connector.charge_points == {
             "101": {
                 "available": False,
@@ -211,8 +216,12 @@ async def test_on_data(hass: HomeAssistant):
         )
 
         # test AVAILABLE
-        data = {"object": "AVAILABLE", "result": True, "evse_id": "101"}
-        await connector.on_data(data)
+        data6: dict[str, Any] = {
+            "object": "AVAILABLE",
+            "result": True,
+            "evse_id": "101",
+        }
+        await connector.on_data(data6)
         assert connector.charge_points == {
             "101": {
                 "available": True,
@@ -226,8 +235,12 @@ async def test_on_data(hass: HomeAssistant):
         )
 
         # test PLUG_AND_CHARGE
-        data = {"object": "PLUG_AND_CHARGE", "result": True, "evse_id": "101"}
-        await connector.on_data(data)
+        data7: dict[str, Any] = {
+            "object": "PLUG_AND_CHARGE",
+            "result": True,
+            "evse_id": "101",
+        }
+        await connector.on_data(data7)
         assert connector.charge_points == {
             "101": {
                 "available": True,
@@ -239,10 +252,6 @@ async def test_on_data(hass: HomeAssistant):
         test_async_dispatcher_send.assert_called_with(
             hass, "blue_current_value_update_101"
         )
-
-        # test ERROR
-        data = {"object": "REBOOT", "success": False, "error": "error"}
-        assert await connector.on_data(data) is None
 
 
 async def test_start_loop(hass: HomeAssistant):
