@@ -14,7 +14,7 @@ from bluecurrent_api.exceptions import (
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.dispatcher import (
@@ -24,23 +24,24 @@ from homeassistant.helpers.dispatcher import (
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_call_later
 
-from .const import DOMAIN, LOGGER, PLATFORMS
+from .const import CARD, DOMAIN, EVSE_ID, LOGGER, PLATFORMS
 
 CHARGE_POINTS = "CHARGE_POINTS"
 DATA = "data"
 SMALL_DELAY = 1
 LARGE_DELAY = 20
 
-EVSE_ID = "evse_id"
 GRID_STATUS = "GRID_STATUS"
 MODEL_TYPE = "model_type"
 OBJECT = "object"
-VALUE_TYPES = ["CH_STATUS", "CH_SETTINGS"]
+VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
 RESULT = "result"
 ACTIVITY = "ch_activity"
 AVAILABLE = "available"
 UNAVAILABLE = "unavailable"
+SERVICES = ("SOFT_RESET", "REBOOT")
+SUCCESS = "success"
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -71,6 +72,27 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
             EVENT_HOMEASSISTANT_STOP, _async_disconnect_websocket
         )
     )
+
+    async def handle_reset(call: ServiceCall) -> None:
+        evse_id = call.data.get(EVSE_ID)
+        await client.reset(evse_id)
+
+    async def handle_reboot(call: ServiceCall) -> None:
+        evse_id = call.data.get(EVSE_ID)
+        await client.reboot(evse_id)
+
+    async def handle_start_session(call: ServiceCall) -> None:
+        evse_id = call.data.get(EVSE_ID)
+        await client.start_session(evse_id, config_entry.data[CARD])
+
+    async def handle_stop_session(call: ServiceCall) -> None:
+        evse_id = call.data.get(EVSE_ID)
+        await client.stop_session(evse_id)
+
+    hass.services.async_register(DOMAIN, "reset", handle_reset)
+    hass.services.async_register(DOMAIN, "reboot", handle_reboot)
+    hass.services.async_register(DOMAIN, "start_session", handle_start_session)
+    hass.services.async_register(DOMAIN, "stop_session", handle_stop_session)
 
     return True
 
@@ -147,6 +169,14 @@ class Connector:
             result = message[RESULT]
             new_data = {key: result}
             self.update_charge_point(evse_id, new_data)
+
+        # service responses
+        elif object_name in SERVICES:
+            state = "successful"
+            success: bool = message[SUCCESS]
+            if not success:
+                state = "un" + state
+            LOGGER.debug("%s was %s ", object_name, state)
 
     async def get_charge_point_data(self, evse_id: str) -> None:
         """Get all the data of a charge point."""

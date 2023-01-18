@@ -48,7 +48,7 @@ async def test_user(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
     assert result2["title"] == "123"
-    assert result2["data"] == {"api_token": "123"}
+    assert result2["data"] == {"api_token": "123", "card": "BCU_APP"}
 
 
 async def test_form_invalid_token(hass: HomeAssistant) -> None:
