@@ -42,6 +42,10 @@ AVAILABLE = "available"
 UNAVAILABLE = "unavailable"
 SERVICES = ("SOFT_RESET", "REBOOT")
 SUCCESS = "success"
+RESET = "reset"
+REBOOT = "reboot"
+START_SESSION = "start_session"
+STOP_SESSION = "stop_session"
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -197,17 +201,7 @@ class Connector:
             else:
                 data[AVAILABLE] = False
 
-        def handle_available(data: dict) -> None:
-            available = data.get(AVAILABLE)
-            if available:
-                data[ACTIVITY] = AVAILABLE
-
-            else:
-                data[ACTIVITY] = UNAVAILABLE
-
-        if AVAILABLE in data:
-            handle_available(data)
-        elif ACTIVITY in data:
+        if ACTIVITY in data:
             handle_activity(data)
 
         self.charge_points[evse_id].update(data)

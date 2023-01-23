@@ -253,6 +253,14 @@ async def test_on_data(hass: HomeAssistant):
             hass, "blue_current_value_update_101"
         )
 
+        # test SOFT_RESET
+        data7 = {"object": "STATUS_SOFT_RESET", "success": True}
+        await connector.on_data(data7)
+
+        # test REBOOT
+        data8 = {"object": "STATUS_REBOOT", "success": False}
+        await connector.on_data(data8)
+
 
 async def test_start_loop(hass: HomeAssistant):
     """Tests start_loop."""
