@@ -95,6 +95,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "cannot_connect"
         except NoCardsFound:
             errors["base"] = "no_cards_found"
+        except RequestLimitReached:
+            errors["base"] = "limit_reached"
+        except AlreadyConnected:
+            errors["base"] = "already_connected"
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception("Unexpected exception")
+            errors["base"] = "unknown"
 
         if not errors:
             card_names = [card[CONF_NAME] for card in cards]
