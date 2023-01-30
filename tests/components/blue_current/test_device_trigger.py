@@ -142,7 +142,7 @@ async def test_get_triggers(
 
 
 async def test_if_activity_fires_on_state_change(hass: HomeAssistant, calls):
-    """Test for bluecurrent activity trigger firing."""
+    """Test for blue current activity trigger firing."""
     hass.states.async_set("sensor.activity_101", "unavailable")
 
     assert await async_setup_component(
@@ -201,7 +201,7 @@ async def test_if_activity_fires_on_state_change(hass: HomeAssistant, calls):
 
 
 async def test_if_vehicle_status_fires_on_state_change(hass: HomeAssistant, calls):
-    """Test for bluecurrent vehicle_status trigger firing."""
+    """Test for blue current vehicle_status trigger firing."""
     hass.states.async_set("sensor.vehicle_status_101", "vehicle_error")
 
     assert await async_setup_component(
