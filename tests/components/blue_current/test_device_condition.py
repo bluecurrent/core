@@ -43,7 +43,7 @@ async def test_get_conditions(
     device_reg: device_registry.DeviceRegistry,
     entity_reg: entity_registry.EntityRegistry,
 ) -> None:
-    """Test we get the expected conditions from a bluecurrent."""
+    """Test we get the expected conditions from a blue current."""
     config_entry = MockConfigEntry(domain=DOMAIN, data={})
     config_entry.add_to_hass(hass)
     evse_id = "101"

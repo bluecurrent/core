@@ -13,7 +13,7 @@ from bluecurrent_api.exceptions import (
 )
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry
@@ -24,23 +24,24 @@ from homeassistant.helpers.dispatcher import (
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_call_later
 
-from .const import CARD, DOMAIN, EVSE_ID, LOGGER, PLATFORMS
+from .const import CARD, DOMAIN, EVSE_ID, LOGGER
 
+PLATFORMS = [Platform.SENSOR, Platform.SWITCH, Platform.BUTTON]
 CHARGE_POINTS = "CHARGE_POINTS"
 DATA = "data"
 SMALL_DELAY = 1
 LARGE_DELAY = 20
 
-GRID_STATUS = "GRID_STATUS"
+GRID = "GRID"
 MODEL_TYPE = "model_type"
 OBJECT = "object"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
 RESULT = "result"
-ACTIVITY = "ch_activity"
+ACTIVITY = "activity"
 AVAILABLE = "available"
 UNAVAILABLE = "unavailable"
-SERVICES = ("SOFT_RESET", "REBOOT")
+SERVICES = ("SOFT_RESET", "REBOOT", "START_SESSION", "STOP_SESSION")
 SUCCESS = "success"
 RESET = "reset"
 REBOOT = "reboot"
@@ -161,7 +162,7 @@ class Connector:
             self.update_charge_point(evse_id, value_data)
 
         # gets grid key / values
-        elif object_name == GRID_STATUS:
+        elif GRID in object_name:
             data: dict = message[DATA]
             self.grid = data
             self.dispatch_grid_update_signal()
