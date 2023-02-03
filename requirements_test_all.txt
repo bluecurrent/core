@@ -373,7 +373,7 @@ blebox_uniapi==2.1.4
 blinkpy==0.19.2
 
 # homeassistant.components.blue_current
-bluecurrent-api==1.0.1
+bluecurrent-api==1.0.2
 
 # homeassistant.components.bluemaestro
 bluemaestro-ble==0.2.1
