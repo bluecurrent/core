@@ -56,9 +56,9 @@ SWITCHES: tuple[BlueCurrentSwitchEntityDescription, ...] = (
         has_entity_name=True,
     ),
     BlueCurrentSwitchEntityDescription(
-        key="available",
+        key="operative",
         device_class=SwitchDeviceClass.SWITCH,
-        name="Available",
+        name="Operative",
         icon="mdi:power",
         function=lambda client, evse_id, value: client.set_operative(evse_id, value),
         has_entity_name=True,

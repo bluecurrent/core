@@ -36,11 +36,11 @@ GRID = "GRID"
 MODEL_TYPE = "model_type"
 OBJECT = "object"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
-SETTINGS = ("AVAILABLE", "PUBLIC_CHARGING", "PLUG_AND_CHARGE")
+SETTINGS = ("PUBLIC_CHARGING", "PLUG_AND_CHARGE")
 RESULT = "result"
 ACTIVITY = "activity"
-AVAILABLE = "available"
 UNAVAILABLE = "unavailable"
+OPERATIVE = "operative"
 SERVICES = ("SOFT_RESET", "REBOOT", "START_SESSION", "STOP_SESSION")
 SUCCESS = "success"
 RESET = "reset"
@@ -197,10 +197,10 @@ class Connector:
 
         def handle_activity(data: dict) -> None:
             activity = data.get(ACTIVITY)
-            if activity == AVAILABLE:
-                data[AVAILABLE] = True
+            if activity != UNAVAILABLE:
+                data[OPERATIVE] = True
             else:
-                data[AVAILABLE] = False
+                data[OPERATIVE] = False
 
         if ACTIVITY in data:
             handle_activity(data)
