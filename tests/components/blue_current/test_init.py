@@ -139,6 +139,7 @@ async def test_on_data(hass: HomeAssistant):
                 "actual_p1": 12,
                 "actual_p2": 14,
                 "actual_p3": 15,
+                "operative": True,
                 "activity": "charging",
                 "start_datetime": "2021-11-18T14:12:23",
                 "stop_datetime": "2021-11-18T14:32:23",
@@ -177,7 +178,6 @@ async def test_on_data(hass: HomeAssistant):
         data4: dict[str, Any] = {
             "object": "CH_SETTINGS",
             "data": {
-                "available": False,
                 "plug_and_charge": False,
                 "public_charging": False,
                 "evse_id": "101",
@@ -186,10 +186,8 @@ async def test_on_data(hass: HomeAssistant):
         await connector.on_data(data4)
         assert connector.charge_points == {
             "101": {
-                "available": False,
                 "plug_and_charge": False,
                 "public_charging": False,
-                "ch_activity": "unavailable",
             }
         }
         test_async_dispatcher_send.assert_called_with(
@@ -205,29 +203,8 @@ async def test_on_data(hass: HomeAssistant):
         await connector.on_data(data5)
         assert connector.charge_points == {
             "101": {
-                "available": False,
                 "plug_and_charge": False,
                 "public_charging": True,
-                "ch_activity": "unavailable",
-            }
-        }
-        test_async_dispatcher_send.assert_called_with(
-            hass, "blue_current_value_update_101"
-        )
-
-        # test AVAILABLE
-        data6: dict[str, Any] = {
-            "object": "AVAILABLE",
-            "result": True,
-            "evse_id": "101",
-        }
-        await connector.on_data(data6)
-        assert connector.charge_points == {
-            "101": {
-                "available": True,
-                "plug_and_charge": False,
-                "public_charging": True,
-                "ch_activity": "available",
             }
         }
         test_async_dispatcher_send.assert_called_with(
@@ -243,10 +220,8 @@ async def test_on_data(hass: HomeAssistant):
         await connector.on_data(data7)
         assert connector.charge_points == {
             "101": {
-                "available": True,
                 "plug_and_charge": True,
                 "public_charging": True,
-                "ch_activity": "available",
             }
         }
         test_async_dispatcher_send.assert_called_with(

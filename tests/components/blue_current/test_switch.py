@@ -36,14 +36,14 @@ async def test_switches(hass: HomeAssistant):
         entry = entity_registry.async_get(f"switch.101_{key}")
         assert entry and entry.unique_id == f"{key}_101"
 
-    # available
+    # operative
     switches = er.async_entries_for_config_entry(entity_registry, "uuid")
     assert len(charge_point.keys()) == len(switches) - 1
 
-    state = hass.states.get("switch.101_available")
+    state = hass.states.get("switch.101_operative")
     assert state and state.state == "unavailable"
-    entry = entity_registry.async_get("switch.101_available")
-    assert entry and entry.unique_id == "available_101"
+    entry = entity_registry.async_get("switch.101_operative")
+    assert entry and entry.unique_id == "operative_101"
 
 
 async def test_toggle(hass: HomeAssistant):
