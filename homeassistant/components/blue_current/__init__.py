@@ -1,6 +1,7 @@
 """The Blue Current integration."""
 from __future__ import annotations
 
+from contextlib import suppress
 from datetime import datetime
 from typing import Any
 
@@ -14,17 +15,13 @@ from bluecurrent_api.exceptions import (
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_TOKEN, EVENT_HOMEASSISTANT_STOP, Platform
-from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
+from homeassistant.core import Event, HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry
-from homeassistant.helpers.dispatcher import (
-    async_dispatcher_connect,
-    async_dispatcher_send,
-)
-from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later
 
-from .const import CARD, DOMAIN, EVSE_ID, LOGGER
+from .const import CARD, DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
 
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH, Platform.BUTTON]
 CHARGE_POINTS = "CHARGE_POINTS"
@@ -33,7 +30,6 @@ SMALL_DELAY = 1
 LARGE_DELAY = 20
 
 GRID = "GRID"
-MODEL_TYPE = "model_type"
 OBJECT = "object"
 VALUE_TYPES = ("CH_STATUS", "CH_SETTINGS")
 SETTINGS = ("PUBLIC_CHARGING", "PLUG_AND_CHARGE")
@@ -246,45 +242,5 @@ class Connector:
 
     async def disconnect(self) -> None:
         """Disconnect from the websocket."""
-        try:
+        with suppress(WebsocketException):
             await self.client.disconnect()
-        except WebsocketException:
-            pass
-
-
-class BlueCurrentEntity(Entity):
-    """Define a base charge point entity."""
-
-    def __init__(self, connector: Connector, evse_id: str) -> None:
-        """Initialize the entity."""
-        self.connector: Connector = connector
-
-        self.evse_id = evse_id
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, evse_id)},
-            name=evse_id,
-            manufacturer="Blue Current",
-            model=connector.charge_points[evse_id][MODEL_TYPE],
-        )
-
-    async def async_added_to_hass(self) -> None:
-        """Register callbacks."""
-
-        @callback
-        def update() -> None:
-            """Update the state."""
-            self.update_from_latest_data()
-            self.async_write_ha_state()
-
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, f"{DOMAIN}_value_update_{self.evse_id}", update
-            )
-        )
-
-        self.update_from_latest_data()
-
-    @callback
-    def update_from_latest_data(self) -> None:
-        """Update the entity from the latest data."""
-        raise NotImplementedError

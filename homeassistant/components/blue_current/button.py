@@ -6,8 +6,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import BlueCurrentEntity, Connector
+from . import Connector
 from .const import DOMAIN, EVSE_ID
+from .entity import BlueCurrentEntity
 
 BUTTONS = (
     ButtonEntityDescription(
