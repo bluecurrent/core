@@ -1,5 +1,6 @@
 """Entity representing a Blue Current charge point."""
 from abc import abstractmethod
+from typing import Any
 
 from homeassistant.const import ATTR_NAME
 from homeassistant.core import callback
@@ -11,15 +12,29 @@ from . import Connector
 from .const import DOMAIN, MODEL_TYPE
 
 
-class BlueCurrentEntity(Entity):
+class BaseEntity(Entity):
     """Define a base Blue Current entity."""
 
     _attr_has_entity_name = True
     _attr_should_poll = False
 
-    def __init__(self, connector: Connector, signal: str) -> None:
+    def __init__(self, connector: Connector) -> None:
         """Initialize the entity."""
         self.connector = connector
+
+    @property
+    def available(self) -> bool:
+        """Return entity availability."""
+        return self.connector.available
+
+
+class UpdatingEntity(BaseEntity):
+    """Define an updating Blue Current entity."""
+
+    def __init__(self, connector: Connector, signal: str, **kwargs: Any) -> None:
+        """Initialize the entity."""
+        super().__init__(connector, **kwargs)
+
         self.signal = signal
         self.has_value = False
 
@@ -39,7 +54,7 @@ class BlueCurrentEntity(Entity):
     @property
     def available(self) -> bool:
         """Return entity availability."""
-        return self.connector.available and self.has_value
+        return super().available and self.has_value
 
     @callback
     @abstractmethod
@@ -47,12 +62,12 @@ class BlueCurrentEntity(Entity):
         """Update the entity from the latest data."""
 
 
-class ChargepointEntity(BlueCurrentEntity):
-    """Define a base charge point entity."""
+class ChargepointEntity(BaseEntity):
+    """Define a charge point entity."""
 
-    def __init__(self, connector: Connector, evse_id: str) -> None:
+    def __init__(self, connector: Connector, evse_id: str, **kwargs: Any) -> None:
         """Initialize the entity."""
-        super().__init__(connector, f"{DOMAIN}_value_update_{evse_id}")
+        super().__init__(connector, **kwargs)
 
         chargepoint_name = connector.charge_points[evse_id][ATTR_NAME]
 
@@ -62,4 +77,14 @@ class ChargepointEntity(BlueCurrentEntity):
             name=chargepoint_name if chargepoint_name != "" else evse_id,
             manufacturer="Blue Current",
             model=connector.charge_points[evse_id][MODEL_TYPE],
+        )
+
+
+class UpdatingChargepointEntity(UpdatingEntity, ChargepointEntity):
+    """Define an updating charge point entity."""
+
+    def __init__(self, connector: Connector, evse_id: str) -> None:
+        """Initialize the entity."""
+        super().__init__(
+            connector, signal=f"{DOMAIN}_value_update_{evse_id}", evse_id=evse_id
         )

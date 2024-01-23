@@ -112,6 +112,12 @@ async def init_integration(
     if charge_point is None:
         charge_point = DEFAULT_CHARGE_POINT
 
+    if status is None:
+        status = {}
+
+    if grid is None:
+        grid = {}
+
     client_mock = create_client_mock(charge_point, status, grid)
 
     with patch("homeassistant.components.blue_current.PLATFORMS", [platform]), patch(
@@ -121,7 +127,7 @@ async def init_integration(
             domain=DOMAIN,
             entry_id="uuid",
             unique_id="uuid",
-            data={"api_token": "123", "card": {"123"}},
+            data={"api_token": "123"},
         )
         config_entry.add_to_hass(hass)
 

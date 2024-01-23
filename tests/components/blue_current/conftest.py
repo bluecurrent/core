@@ -14,5 +14,5 @@ def config_entry_fixture(hass: HomeAssistant) -> MockConfigEntry:
         domain=DOMAIN,
         entry_id="uuid",
         unique_id="1234",
-        data={"api_token": "123", "card": {"123"}},
+        data={"api_token": "123"},
     )

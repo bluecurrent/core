@@ -20,9 +20,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import Connector
 from .const import DOMAIN
-from .entity import BlueCurrentEntity, ChargepointEntity
-
-TIMESTAMP_KEYS = ("start_datetime", "stop_datetime", "offline_since")
+from .entity import UpdatingChargepointEntity, UpdatingEntity
 
 SENSORS = (
     SensorEntityDescription(
@@ -102,21 +100,6 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     SensorEntityDescription(
-        key="start_datetime",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        translation_key="start_datetime",
-    ),
-    SensorEntityDescription(
-        key="stop_datetime",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        translation_key="stop_datetime",
-    ),
-    SensorEntityDescription(
-        key="offline_since",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        translation_key="offline_since",
-    ),
-    SensorEntityDescription(
         key="total_cost",
         native_unit_of_measurement=CURRENCY_EURO,
         device_class=SensorDeviceClass.MONETARY,
@@ -170,6 +153,24 @@ SENSORS = (
         entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+)
+
+TIMESTAMP_SENSORS = (
+    SensorEntityDescription(
+        key="start_datetime",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        translation_key="start_datetime",
+    ),
+    SensorEntityDescription(
+        key="stop_datetime",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        translation_key="stop_datetime",
+    ),
+    SensorEntityDescription(
+        key="offline_since",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        translation_key="offline_since",
     ),
 )
 
@@ -227,13 +228,16 @@ async def async_setup_entry(
         for sensor in SENSORS:
             sensor_list.append(ChargePointSensor(connector, sensor, evse_id))
 
+        for sensor in TIMESTAMP_SENSORS:
+            sensor_list.append(ChargePointTimestampSensor(connector, sensor, evse_id))
+
     for grid_sensor in GRID_SENSORS:
         sensor_list.append(GridSensor(connector, grid_sensor))
 
     async_add_entities(sensor_list)
 
 
-class ChargePointSensor(ChargepointEntity, SensorEntity):
+class ChargePointSensor(UpdatingChargepointEntity, SensorEntity):
     """Define a charge point sensor."""
 
     def __init__(
@@ -256,18 +260,29 @@ class ChargePointSensor(ChargepointEntity, SensorEntity):
         new_value = self.connector.charge_points[self.evse_id].get(self.key)
 
         if new_value is not None:
-            if self.key in TIMESTAMP_KEYS and not (
-                self._attr_native_value is None or self._attr_native_value < new_value
-            ):
-                return
             self.has_value = True
             self._attr_native_value = new_value
 
-        elif self.key not in TIMESTAMP_KEYS:
+        else:
             self.has_value = False
 
 
-class GridSensor(BlueCurrentEntity, SensorEntity):
+class ChargePointTimestampSensor(ChargePointSensor):
+    """Define a charge point timestamp."""
+
+    @callback
+    def update_from_latest_data(self) -> None:
+        """Update the sensor from the latest data."""
+        new_value = self.connector.charge_points[self.evse_id].get(self.key)
+
+        if new_value is not None and (
+            self._attr_native_value is None or self._attr_native_value < new_value
+        ):
+            self.has_value = True
+            self._attr_native_value = new_value
+
+
+class GridSensor(UpdatingEntity, SensorEntity):
     """Define a grid sensor."""
 
     def __init__(

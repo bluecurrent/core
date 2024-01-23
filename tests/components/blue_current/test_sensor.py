@@ -8,13 +8,6 @@ from homeassistant.helpers import entity_registry as er
 
 from . import init_integration
 
-charge_point = {
-    "evse_id": "101",
-    "model_type": "",
-    "name": "",
-}
-
-
 charge_point_status = {
     "actual_v1": 14,
     "actual_v2": 18,
@@ -89,9 +82,8 @@ async def test_sensors_created(hass: HomeAssistant) -> None:
     await init_integration(
         hass,
         "sensor",
-        charge_point,
-        charge_point_status | charge_point_status_timestamps,
-        grid,
+        status=charge_point_status | charge_point_status_timestamps,
+        grid=grid,
     )
 
     entity_registry = er.async_get(hass)
@@ -105,7 +97,7 @@ async def test_sensors_created(hass: HomeAssistant) -> None:
 @pytest.mark.usefixtures("entity_registry_enabled_by_default")
 async def test_sensors(hass: HomeAssistant) -> None:
     """Test the underlying sensors."""
-    await init_integration(hass, "sensor", charge_point, charge_point_status, grid)
+    await init_integration(hass, "sensor", status=charge_point_status, grid=grid)
 
     entity_registry = er.async_get(hass)
     for entity_id, key in charge_point_entity_ids.items():
