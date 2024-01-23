@@ -28,7 +28,7 @@ from homeassistant.helpers.event import async_call_later
 
 from .const import DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.BUTTON, Platform.SENSOR]
 CHARGE_POINTS = "CHARGE_POINTS"
 DATA = "data"
 SMALL_DELAY = 1
@@ -93,6 +93,7 @@ class Connector:
         self.hass = hass
         self.client = client
         self.charge_points: dict[str, dict] = {}
+        self.cards: list[dict[str, Any]] = []
         self.grid: dict[str, Any] = {}
         self.available = False
 
