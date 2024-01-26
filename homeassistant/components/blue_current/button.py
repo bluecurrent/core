@@ -88,7 +88,6 @@ class ChargePointButton(ChargepointEntity, ButtonEntity):
         evse_id: str,
     ) -> None:
         """Initialize the button."""
-        # super().__init__(connector, evse_id)
         super().__init__(connector, evse_id)
 
         self.function = button.function
@@ -118,5 +117,4 @@ class RefreshChargeCardsButton(BaseEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        cards = await self.connector.client.get_charge_cards()
-        self.connector.cards = cards
+        await self.connector.client.get_charge_cards()

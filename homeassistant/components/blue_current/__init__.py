@@ -30,6 +30,8 @@ from .const import DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
 
 PLATFORMS = [Platform.BUTTON, Platform.SENSOR]
 CHARGE_POINTS = "CHARGE_POINTS"
+CHARGE_CARDS = "CHARGE_CARDS"
+CARDS = "cards"
 DATA = "data"
 SMALL_DELAY = 1
 LARGE_DELAY = 20
@@ -55,6 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     hass.async_create_background_task(connector.start_loop(), "blue_current-websocket")
     await client.get_charge_points()
+    await client.get_charge_cards()
 
     await client.wait_for_response()
     hass.data[DOMAIN][config_entry.entry_id] = connector
@@ -111,6 +114,10 @@ class Connector:
         if object_name == CHARGE_POINTS:
             charge_points_data: list = message[DATA]
             await self.handle_charge_point_data(charge_points_data)
+
+        elif object_name == CHARGE_CARDS:
+            cards: list[dict[str, Any]] = message[CARDS]
+            self.cards = cards
 
         # gets charge point key / values
         elif object_name in VALUE_TYPES:
@@ -176,6 +183,8 @@ class Connector:
             await self.connect(self.config.data[CONF_API_TOKEN])
             LOGGER.debug("Reconnected to the Blue Current websocket")
             self.hass.async_create_task(self.start_loop())
+            await self.client.get_charge_points()
+            await self.client.get_charge_cards()
         except RequestLimitReached:
             self.available = False
             async_call_later(
