@@ -20,7 +20,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import Connector
 from .const import DOMAIN
-from .entity import UpdatingChargepointEntity, UpdatingEntity
+from .entity import BaseEntity, ChargepointEntity
 
 SENSORS = (
     SensorEntityDescription(
@@ -237,7 +237,7 @@ async def async_setup_entry(
     async_add_entities(sensor_list)
 
 
-class ChargePointSensor(UpdatingChargepointEntity, SensorEntity):
+class ChargePointSensor(ChargepointEntity, SensorEntity):
     """Define a charge point sensor."""
 
     def __init__(
@@ -282,7 +282,7 @@ class ChargePointTimestampSensor(ChargePointSensor):
             self._attr_native_value = new_value
 
 
-class GridSensor(UpdatingEntity, SensorEntity):
+class GridSensor(BaseEntity, SensorEntity):
     """Define a grid sensor."""
 
     def __init__(

@@ -1,7 +1,7 @@
 """Tests for the Blue Current integration."""
 from __future__ import annotations
 
-from asyncio import Event, sleep
+from asyncio import Event
 from functools import partial
 from unittest.mock import MagicMock, patch
 
@@ -19,35 +19,22 @@ DEFAULT_CHARGE_POINT = {
 }
 
 
-async def connect(client, token: str):
-    """Set the connected event."""
-    if client.connect_exception:
-        # Raise exception once.
-        temp = client.connect_exception
-        client.connect_exception = None
-        raise temp
-
-    client.connected.set()
-    client.connected.clear()
+async def wait_for_charge_points(received_charge_points: Event):
+    """Wait until charge points are received."""
+    await received_charge_points.wait()
 
 
-async def start_loop(client, receiver):
-    """Set the receiver."""
+async def connect(client, token, receiver, on_disconnect):
+    """Mock connecting to the websocket and send get_charge_points."""
     client.receiver = receiver
-    client.loop_start_task.set()
-
-    while True:
-        if client.loop_exception:
-            # Raise exception once.
-            temp = client.loop_exception
-            client.loop_exception = None
-            raise temp
-        await sleep(0)
+    await client.get_charge_points()
 
 
-async def get_charge_points(client, charge_point: dict) -> None:
+async def get_charge_points(
+    client, received_charge_points: Event, charge_point: dict
+) -> None:
     """Send a list of charge points to the callback."""
-    await client.loop_start_task.wait()
+    received_charge_points.set()
     await client.receiver(
         {
             "object": "CHARGE_POINTS",
@@ -78,19 +65,16 @@ def create_client_mock(
 ) -> MagicMock:
     """Create a mock of the bluecurrent-api Client."""
     client_mock = MagicMock(spec=Client)
-
     client_mock.receiver = None
 
-    client_mock.loop_exception = None
-    client_mock.connect_exception = None
+    received_charge_points = Event()
 
-    client_mock.connected = Event()
-    client_mock.loop_start_task = Event()
-
+    client_mock.wait_for_charge_points.side_effect = partial(
+        wait_for_charge_points, received_charge_points
+    )
     client_mock.connect.side_effect = partial(connect, client_mock)
-    client_mock.start_loop.side_effect = partial(start_loop, client_mock)
     client_mock.get_charge_points.side_effect = partial(
-        get_charge_points, client_mock, charge_point
+        get_charge_points, client_mock, received_charge_points, charge_point
     )
     client_mock.get_status.side_effect = partial(get_status, client_mock, status)
     client_mock.get_grid_status.side_effect = partial(

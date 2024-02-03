@@ -1,13 +1,7 @@
 """Test Blue Current Init Component."""
-from datetime import timedelta
 from unittest.mock import patch
 
-from bluecurrent_api.exceptions import (
-    BlueCurrentException,
-    InvalidApiToken,
-    RequestLimitReached,
-    WebsocketError,
-)
+from bluecurrent_api.exceptions import BlueCurrentException, InvalidApiToken
 import pytest
 
 from homeassistant.components.blue_current import async_setup_entry
@@ -18,8 +12,6 @@ from homeassistant.exceptions import (
     ConfigEntryNotReady,
     IntegrationError,
 )
-
-from . import init_integration
 
 from tests.common import MockConfigEntry
 
@@ -54,44 +46,8 @@ async def test_config_exceptions(
 ) -> None:
     """Test if the correct config error is raised when connecting to the api fails."""
     with patch(
-        "homeassistant.components.blue_current.Client.connect",
+        "homeassistant.components.blue_current.Client.validate_api_token",
         side_effect=api_error,
     ), pytest.raises(config_error):
         config_entry.add_to_hass(hass)
         await async_setup_entry(hass, config_entry)
-
-
-async def test_start_loop(hass: HomeAssistant) -> None:
-    """Test start_loop."""
-
-    with patch("homeassistant.components.blue_current.SMALL_DELAY", 0):
-        mock_client = await init_integration(hass)
-        mock_client.loop_exception = BlueCurrentException
-
-        await mock_client.connected.wait()
-        assert mock_client.connect.call_count == 2
-
-
-async def test_reconnect_websocket_error(hass: HomeAssistant) -> None:
-    """Test reconnect when connect throws a WebsocketError."""
-
-    with patch("homeassistant.components.blue_current.LARGE_DELAY", 0):
-        mock_client = await init_integration(hass)
-        mock_client.loop_exception = BlueCurrentException
-        mock_client.connect_exception = WebsocketError
-
-        await mock_client.connected.wait()
-        assert mock_client.connect.call_count == 3
-
-
-async def test_reconnect_request_limit_reached_error(hass: HomeAssistant) -> None:
-    """Test reconnect when connect throws a RequestLimitReached."""
-
-    mock_client = await init_integration(hass)
-    mock_client.loop_exception = BlueCurrentException
-    mock_client.connect_exception = RequestLimitReached
-    mock_client.get_next_reset_delta.return_value = timedelta(seconds=0)
-
-    await mock_client.connected.wait()
-    assert mock_client.get_next_reset_delta.call_count == 1
-    assert mock_client.connect.call_count == 3

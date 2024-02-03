@@ -3,14 +3,12 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import suppress
-from datetime import datetime
 from typing import Any
 
 from bluecurrent_api import Client
 from bluecurrent_api.exceptions import (
     BlueCurrentException,
     InvalidApiToken,
-    RequestLimitReached,
     WebsocketError,
 )
 
@@ -24,7 +22,6 @@ from homeassistant.const import (
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_call_later
 
 from .const import DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
 
@@ -49,17 +46,17 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     connector = Connector(hass, config_entry, client)
 
     try:
-        await connector.connect(api_token)
+        await client.validate_api_token(api_token)
     except InvalidApiToken as err:
         raise ConfigEntryAuthFailed("Invalid API token.") from err
     except BlueCurrentException as err:
         raise ConfigEntryNotReady from err
 
-    hass.async_create_background_task(connector.start_loop(), "blue_current-websocket")
-    await client.get_charge_points()
-    await client.get_charge_cards()
+    hass.async_create_background_task(
+        connector.start_loop(api_token), "blue_current-websocket"
+    )
 
-    await client.wait_for_response()
+    await client.wait_for_charge_points()
     hass.data[DOMAIN][config_entry.entry_id] = connector
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
@@ -98,12 +95,6 @@ class Connector:
         self.charge_points: dict[str, dict] = {}
         self.cards: list[dict[str, Any]] = []
         self.grid: dict[str, Any] = {}
-        self.available = False
-
-    async def connect(self, token: str) -> None:
-        """Register on_data and connect to the websocket."""
-        await self.client.connect(token)
-        self.available = True
 
     async def on_data(self, message: dict) -> None:
         """Handle received data."""
@@ -139,9 +130,10 @@ class Connector:
                     entry[EVSE_ID], entry[MODEL_TYPE], entry[ATTR_NAME]
                 )
                 for entry in charge_points_data
-            )
+            ),
+            self.client.get_grid_status(charge_points_data[0][EVSE_ID]),
         )
-        await self.client.get_grid_status(charge_points_data[0][EVSE_ID])
+        self.dispatch_connection_changed()
 
     async def handle_charge_point(self, evse_id: str, model: str, name: str) -> None:
         """Add the chargepoint and request their data."""
@@ -155,44 +147,41 @@ class Connector:
     def update_charge_point(self, evse_id: str, data: dict) -> None:
         """Update the charge point data."""
         self.charge_points[evse_id].update(data)
-        self.dispatch_value_update_signal(evse_id)
+        self.dispatch_charge_point_update_signal(evse_id)
 
-    def dispatch_value_update_signal(self, evse_id: str) -> None:
-        """Dispatch a value signal."""
-        async_dispatcher_send(self.hass, f"{DOMAIN}_value_update_{evse_id}")
+    def dispatch_charge_point_update_signal(self, evse_id: str) -> None:
+        """Dispatch a charge point signal."""
+        async_dispatcher_send(self.hass, f"{DOMAIN}_charge_point_update_{evse_id}")
 
     def dispatch_grid_update_signal(self) -> None:
         """Dispatch a grid signal."""
         async_dispatcher_send(self.hass, f"{DOMAIN}_grid_update")
 
-    async def start_loop(self) -> None:
+    def dispatch_connection_changed(self) -> None:
+        """Dispatch a connected signal."""
+        async_dispatcher_send(self.hass, f"{DOMAIN}_connection_changed")
+
+    async def start_loop(self, token: str) -> None:
         """Start the receive loop."""
         try:
-            await self.client.start_loop(self.on_data)
+            await self.client.connect(token, self.on_data, self.on_disconnect)
         except BlueCurrentException as err:
             LOGGER.warning(
-                "Disconnected from the Blue Current websocket. Retrying to connect in background. %s",
+                "%s, will not try to reconnect",
                 err,
             )
 
-            async_call_later(self.hass, SMALL_DELAY, self.reconnect)
+    async def on_disconnect(self) -> None:
+        """Dispatch signals to update entity states."""
+        for evse_id in self.charge_points:
+            self.dispatch_charge_point_update_signal(evse_id)
+        self.dispatch_grid_update_signal()
+        self.dispatch_connection_changed()
 
-    async def reconnect(self, _event_time: datetime | None = None) -> None:
-        """Keep trying to reconnect to the websocket."""
-        try:
-            await self.connect(self.config.data[CONF_API_TOKEN])
-            LOGGER.debug("Reconnected to the Blue Current websocket")
-            self.hass.async_create_task(self.start_loop())
-            await self.client.get_charge_points()
-            await self.client.get_charge_cards()
-        except RequestLimitReached:
-            self.available = False
-            async_call_later(
-                self.hass, self.client.get_next_reset_delta(), self.reconnect
-            )
-        except WebsocketError:
-            self.available = False
-            async_call_later(self.hass, LARGE_DELAY, self.reconnect)
+    @property
+    def connected(self) -> bool:
+        """Returns the connection status."""
+        return self.client.is_connected()
 
     async def disconnect(self) -> None:
         """Disconnect from the websocket."""

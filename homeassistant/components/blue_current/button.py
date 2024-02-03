@@ -5,7 +5,7 @@ from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from typing import Any
 
-from bluecurrent_api import Client
+from bluecurrent_api.client import Client
 
 from homeassistant.components.button import (
     ButtonDeviceClass,
@@ -13,7 +13,7 @@ from homeassistant.components.button import (
     ButtonEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import Connector
@@ -54,7 +54,7 @@ CHARGE_POINT_BUTTONS = (
         key="stop_charge_session",
         translation_key="stop_charge_session",
         icon="mdi:stop",
-        function=lambda client, evse_id: client.start_session(evse_id),
+        function=lambda client, evse_id: client.stop_session(evse_id),
     ),
 )
 
@@ -90,6 +90,7 @@ class ChargePointButton(ChargepointEntity, ButtonEntity):
         """Initialize the button."""
         super().__init__(connector, evse_id)
 
+        self.has_value = True
         self.function = button.function
         self.entity_description = button
         self._attr_unique_id = f"{button.key}_{evse_id}"
@@ -98,13 +99,17 @@ class ChargePointButton(ChargepointEntity, ButtonEntity):
         """Handle the button press."""
         await self.function(self.connector.client, self.evse_id)
 
+    @callback
+    def update_from_latest_data(self) -> None:
+        """Update the entity from the latest data."""
+
 
 class RefreshChargeCardsButton(BaseEntity, ButtonEntity):
     """Defines the refresh charge cards button."""
 
     def __init__(self, connector: Connector) -> None:
         """Initialize the button."""
-        super().__init__(connector)
+        super().__init__(connector, f"{DOMAIN}_connection_changed")
 
         button = ButtonEntityDescription(
             key="refresh_charge_cards",
@@ -112,9 +117,14 @@ class RefreshChargeCardsButton(BaseEntity, ButtonEntity):
             icon="mdi:card-account-details",
         )
 
+        self.has_value = True
         self.entity_description = button
         self._attr_unique_id = button.key
 
     async def async_press(self) -> None:
         """Handle the button press."""
         await self.connector.client.get_charge_cards()
+
+    @callback
+    def update_from_latest_data(self) -> None:
+        """Update the entity from the latest data."""

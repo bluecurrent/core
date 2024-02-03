@@ -18,22 +18,9 @@ class BaseEntity(Entity):
     _attr_has_entity_name = True
     _attr_should_poll = False
 
-    def __init__(self, connector: Connector) -> None:
+    def __init__(self, connector: Connector, signal: str) -> None:
         """Initialize the entity."""
         self.connector = connector
-
-    @property
-    def available(self) -> bool:
-        """Return entity availability."""
-        return self.connector.available
-
-
-class UpdatingEntity(BaseEntity):
-    """Define an updating Blue Current entity."""
-
-    def __init__(self, connector: Connector, signal: str, **kwargs: Any) -> None:
-        """Initialize the entity."""
-        super().__init__(connector, **kwargs)
 
         self.signal = signal
         self.has_value = False
@@ -51,15 +38,15 @@ class UpdatingEntity(BaseEntity):
 
         self.update_from_latest_data()
 
-    @property
-    def available(self) -> bool:
-        """Return entity availability."""
-        return super().available and self.has_value
-
     @callback
     @abstractmethod
     def update_from_latest_data(self) -> None:
         """Update the entity from the latest data."""
+
+    @property
+    def available(self) -> bool:
+        """Return entity availability."""
+        return self.connector.connected and self.has_value
 
 
 class ChargepointEntity(BaseEntity):
@@ -67,7 +54,7 @@ class ChargepointEntity(BaseEntity):
 
     def __init__(self, connector: Connector, evse_id: str, **kwargs: Any) -> None:
         """Initialize the entity."""
-        super().__init__(connector, **kwargs)
+        super().__init__(connector, f"{DOMAIN}_charge_point_update_{evse_id}")
 
         chargepoint_name = connector.charge_points[evse_id][ATTR_NAME]
 
@@ -77,14 +64,4 @@ class ChargepointEntity(BaseEntity):
             name=chargepoint_name if chargepoint_name != "" else evse_id,
             manufacturer="Blue Current",
             model=connector.charge_points[evse_id][MODEL_TYPE],
-        )
-
-
-class UpdatingChargepointEntity(UpdatingEntity, ChargepointEntity):
-    """Define an updating charge point entity."""
-
-    def __init__(self, connector: Connector, evse_id: str) -> None:
-        """Initialize the entity."""
-        super().__init__(
-            connector, signal=f"{DOMAIN}_value_update_{evse_id}", evse_id=evse_id
         )
