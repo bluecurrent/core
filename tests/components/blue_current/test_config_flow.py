@@ -139,7 +139,7 @@ async def test_reauth(
             return_value="test@email.com",
         ),
         patch(
-            "homeassistant.components.blue_current.config_flow.Client.wait_for_charge_points",
+            "homeassistant.components.blue_current.Client.wait_for_charge_points",
         ),
         patch(
             "homeassistant.components.blue_current.Client.connect",

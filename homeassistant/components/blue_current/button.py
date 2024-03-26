@@ -14,11 +14,11 @@ from homeassistant.components.button import (
     ButtonEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import Connector
 from .const import DOMAIN
+from .coordinator import BlueCurrentCoordinator
 from .entity import ChargepointEntity
 
 
@@ -54,14 +54,15 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Blue Current buttons."""
-    connector: Connector = hass.data[DOMAIN][entry.entry_id]
+    coordinator: BlueCurrentCoordinator = hass.data[DOMAIN][entry.entry_id]
+
     async_add_entities(
         ChargePointButton(
-            connector,
+            coordinator,
             button,
             evse_id,
         )
-        for evse_id in connector.charge_points
+        for evse_id in coordinator.charge_points
         for button in CHARGE_POINT_BUTTONS
     )
 
@@ -71,21 +72,16 @@ class ChargePointButton(ChargepointEntity, ButtonEntity):
 
     def __init__(
         self,
-        connector: Connector,
+        coordinator: BlueCurrentCoordinator,
         description: ChargePointButtonEntityDescription,
         evse_id: str,
     ) -> None:
         """Initialize the button."""
-        super().__init__(connector, evse_id)
+        super().__init__(coordinator, evse_id)
 
-        self.has_value = True
         self.entity_description: ChargePointButtonEntityDescription = description
         self._attr_unique_id = f"{description.key}_{evse_id}"
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self.entity_description.function(self.connector.client, self.evse_id)
-
-    @callback
-    def update_from_latest_data(self) -> None:
-        """Update the entity from the latest data."""
+        await self.entity_description.function(self.coordinator.client, self.evse_id)
