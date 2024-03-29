@@ -17,8 +17,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from . import Connector
 from .const import DOMAIN
-from .coordinator import BlueCurrentCoordinator
+from .coordinator import ChargePointCoordinator
 from .entity import ChargepointEntity
 
 
@@ -54,7 +55,7 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Blue Current buttons."""
-    coordinator: BlueCurrentCoordinator = hass.data[DOMAIN][entry.entry_id]
+    connector: Connector = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities(
         ChargePointButton(
@@ -62,7 +63,7 @@ async def async_setup_entry(
             button,
             evse_id,
         )
-        for evse_id in coordinator.charge_points
+        for evse_id, coordinator in connector.charge_point_coordinators.items()
         for button in CHARGE_POINT_BUTTONS
     )
 
@@ -72,15 +73,16 @@ class ChargePointButton(ChargepointEntity, ButtonEntity):
 
     def __init__(
         self,
-        coordinator: BlueCurrentCoordinator,
+        coordinator: ChargePointCoordinator,
         description: ChargePointButtonEntityDescription,
         evse_id: str,
     ) -> None:
         """Initialize the button."""
-        super().__init__(coordinator, evse_id)
+        super().__init__(coordinator, True)
 
         self.entity_description: ChargePointButtonEntityDescription = description
         self._attr_unique_id = f"{description.key}_{evse_id}"
+        self.evse_id = evse_id
 
     async def async_press(self) -> None:
         """Handle the button press."""

@@ -1,131 +1,46 @@
 """Blue Current DataUpdateCoordinator."""
 
-import asyncio
-from contextlib import suppress
-from typing import Any
-
 from bluecurrent_api import Client
-from bluecurrent_api.exceptions import RequestLimitReached, WebsocketError
 
-from homeassistant.const import ATTR_NAME
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
-
-CHARGE_POINTS = "CHARGE_POINTS"
-DATA = "data"
-DELAY = 5
-
-GRID = "GRID"
-OBJECT = "object"
-VALUE_TYPES = ["CH_STATUS"]
+from .const import DOMAIN, LOGGER
 
 
-class BlueCurrentCoordinator(DataUpdateCoordinator[None]):
-    """Blue Current DataUpdateCoordinator."""
+class BlueCurrentCoordinator(DataUpdateCoordinator):
+    """Base data update coordinator."""
 
-    charge_points: dict[str, dict]
-    grid: dict[str, Any]
-
-    def __init__(self, hass: HomeAssistant, client: Client) -> None:
-        """Init Blue Current DataUpdateCoordinator."""
-        super().__init__(
-            hass,
-            LOGGER,
-            name=DOMAIN,
-        )
-        self.charge_points = {}
-        self.grid = {}
+    def __init__(self, hass: HomeAssistant, client: Client, name: str) -> None:
+        """Initialize the coordinator."""
+        super().__init__(hass, LOGGER, name=name)
         self.client = client
 
-    async def on_data(self, message: dict) -> None:
-        """Handle received data."""
 
-        object_name: str = message[OBJECT]
+class ChargePointCoordinator(BlueCurrentCoordinator):
+    """Chargepoint data update coordinator."""
 
-        # gets charge point ids
-        if object_name == CHARGE_POINTS:
-            charge_points_data: list = message[DATA]
-            await self.handle_charge_point_data(charge_points_data)
+    def __init__(
+        self, hass: HomeAssistant, client: Client, evse_id: str, name: str, model: str
+    ) -> None:
+        """Initialize the coordinator."""
+        super().__init__(hass, client, f"Blue Current Charge Point {evse_id}")
 
-        # gets charge point key / values
-        elif object_name in VALUE_TYPES:
-            value_data: dict = message[DATA]
-            evse_id = value_data.pop(EVSE_ID)
-            self.update_charge_point(evse_id, value_data)
-
-        # gets grid key / values
-        elif GRID in object_name:
-            data: dict = message[DATA]
-            self.grid = data
-            self.async_set_updated_data(None)
-
-    async def handle_charge_point_data(self, charge_points_data: list) -> None:
-        """Handle incoming chargepoint data."""
-        await asyncio.gather(
-            *(
-                self.handle_charge_point(
-                    entry[EVSE_ID], entry[MODEL_TYPE], entry[ATTR_NAME]
-                )
-                for entry in charge_points_data
-            ),
-            self.client.get_grid_status(charge_points_data[0][EVSE_ID]),
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, evse_id)},
+            name=name if name != "" else evse_id,
+            manufacturer="Blue Current",
+            model=model,
         )
 
-    async def handle_charge_point(self, evse_id: str, model: str, name: str) -> None:
-        """Add the chargepoint and request their data."""
-        self.add_charge_point(evse_id, model, name)
-        await self.client.get_status(evse_id)
+        self.data = {}
 
-    def add_charge_point(self, evse_id: str, model: str, name: str) -> None:
-        """Add a charge point to charge_points."""
-        self.charge_points[evse_id] = {
-            MODEL_TYPE: model,
-            ATTR_NAME: name,
-        }
-        self.async_set_updated_data(None)
 
-    def update_charge_point(self, evse_id: str, data: dict) -> None:
-        """Update the charge point data."""
-        self.charge_points[evse_id].update(data)
-        self.async_set_updated_data(None)
+class GridCoordinator(BlueCurrentCoordinator):
+    """Grid data update coordinator."""
 
-    async def on_open(self) -> None:
-        """Fetch data when connection is established."""
-        await self.client.get_charge_points()
-
-    async def run_task(self) -> None:
-        """Start the receive loop."""
-        try:
-            while True:
-                try:
-                    await self.client.connect(self.on_data, self.on_open)
-                except RequestLimitReached:
-                    LOGGER.warning(
-                        "Request limit reached. reconnecting at 00:00 (Europe/Amsterdam)"
-                    )
-                    delay = self.client.get_next_reset_delta().seconds
-                except WebsocketError:
-                    LOGGER.debug("Disconnected, retrying in background")
-                    delay = DELAY
-
-                self._on_disconnect()
-                await asyncio.sleep(delay)
-        finally:
-            await self._disconnect()
-
-    def _on_disconnect(self) -> None:
-        """Dispatch signals to update entity states."""
-        self.async_update_listeners()
-
-    async def _disconnect(self) -> None:
-        """Disconnect from the websocket."""
-        with suppress(WebsocketError):
-            await self.client.disconnect()
-            self._on_disconnect()
-
-    @property
-    def connected(self) -> bool:
-        """Returns the connection status."""
-        return self.client.is_connected()
+    def __init__(self, hass: HomeAssistant, client: Client) -> None:
+        """Initialize the coordinator."""
+        super().__init__(hass, client, "Blue Current Grid")
+        self.data = {}

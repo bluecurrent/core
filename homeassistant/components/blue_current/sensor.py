@@ -19,9 +19,10 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from . import Connector
 from .const import DOMAIN
-from .coordinator import BlueCurrentCoordinator
-from .entity import BlueCurrentEntity, ChargepointEntity
+from .coordinator import ChargePointCoordinator, GridCoordinator
+from .entity import ChargepointEntity, GridEntity
 
 TIMESTAMP_KEYS = ("start_datetime", "stop_datetime", "offline_since")
 
@@ -216,15 +217,17 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Blue Current sensors."""
-    coordinator: BlueCurrentCoordinator = hass.data[DOMAIN][entry.entry_id]
+    connector: Connector = hass.data[DOMAIN][entry.entry_id]
 
     sensor_list: list[SensorEntity] = [
         ChargePointSensor(coordinator, sensor, evse_id)
-        for evse_id in coordinator.charge_points
+        for evse_id, coordinator in connector.charge_point_coordinators.items()
         for sensor in SENSORS
     ]
 
-    sensor_list.extend(GridSensor(coordinator, sensor) for sensor in GRID_SENSORS)
+    sensor_list.extend(
+        GridSensor(connector.grid_coordinator, sensor) for sensor in GRID_SENSORS
+    )
 
     async_add_entities(sensor_list)
 
@@ -234,12 +237,12 @@ class ChargePointSensor(ChargepointEntity, SensorEntity):
 
     def __init__(
         self,
-        coordinator: BlueCurrentCoordinator,
+        coordinator: ChargePointCoordinator,
         sensor: SensorEntityDescription,
         evse_id: str,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, evse_id)
+        super().__init__(coordinator)
 
         self.key = sensor.key
         self.entity_description = sensor
@@ -249,7 +252,7 @@ class ChargePointSensor(ChargepointEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Update the sensor from the latest data."""
 
-        new_value = self.coordinator.charge_points[self.evse_id].get(self.key)
+        new_value = self.coordinator.data.get(self.key)
 
         if new_value is not None:
             if self.key in TIMESTAMP_KEYS and not (
@@ -265,12 +268,12 @@ class ChargePointSensor(ChargepointEntity, SensorEntity):
         super()._handle_coordinator_update()
 
 
-class GridSensor(BlueCurrentEntity, SensorEntity):
+class GridSensor(GridEntity, SensorEntity):
     """Define a grid sensor."""
 
     def __init__(
         self,
-        coordinator: BlueCurrentCoordinator,
+        coordinator: GridCoordinator,
         sensor: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
@@ -285,7 +288,7 @@ class GridSensor(BlueCurrentEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         """Update the grid sensor from the latest data."""
 
-        new_value = self.coordinator.grid.get(self.key)
+        new_value = self.coordinator.data.get(self.key)
 
         if new_value is not None:
             self.has_value = True
@@ -293,4 +296,5 @@ class GridSensor(BlueCurrentEntity, SensorEntity):
 
         else:
             self.has_value = False
+
         super()._handle_coordinator_update()
