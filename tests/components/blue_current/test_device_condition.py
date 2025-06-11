@@ -43,15 +43,6 @@ async def test_get_conditions(
         DOMAIN, "vehicle_status", "101", device_id=device_entry.id
     )
 
-    ACTIVITY_TYPES = ["available", "charging", "unavailable", "error", "offline"]
-    VEHICLE_STATUS_TYPES = [
-        "standby",
-        "vehicle_detected",
-        "ready",
-        "no_power",
-        "vehicle_error",
-    ]
-
     base_condition = {
         "condition": "device",
         "domain": DOMAIN,
@@ -78,14 +69,13 @@ async def test_get_conditions(
     )
 
 
-async def test_if_state_for_activity_type(
+async def test_if_state_for_activity(
     hass: HomeAssistant,
     device_registry: dr.DeviceRegistry,
     config_entry: MockConfigEntry,
     service_calls: list[ServiceCall],
 ) -> None:
-    """Test for turn_on and turn_off conditions."""
-    hass.states.async_set("sensor.101_activity", "unavailable")
+    """Test for turn_on and turn_off conditions for activity."""
     config_entry.add_to_hass(hass)
 
     device_entry = device_registry.async_get_or_create(
@@ -151,3 +141,82 @@ async def test_if_state_for_activity_type(
     await hass.async_block_till_done()
     assert len(service_calls) == 5
     assert service_calls[4].data["some"] == "offline - event - offline-event"
+
+
+async def test_if_state_for_vehicle_status(
+    hass: HomeAssistant,
+    device_registry: dr.DeviceRegistry,
+    config_entry: MockConfigEntry,
+    service_calls: list[ServiceCall],
+) -> None:
+    """Test for turn_on and turn_off conditions for vehicle status."""
+    config_entry.add_to_hass(hass)
+
+    device_entry = device_registry.async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        identifiers={(DOMAIN, "101")},
+    )
+
+    assert await async_setup_component(
+        hass,
+        automation.DOMAIN,
+        {
+            automation.DOMAIN: [
+                {
+                    "trigger": {"platform": "event", "event_type": f"{t}-event"},
+                    "condition": [
+                        {
+                            "condition": "device",
+                            "domain": DOMAIN,
+                            "device_id": device_entry.id,
+                            "entity_id": "sensor.101_vehicle_status",
+                            "type": t,
+                        }
+                    ],
+                    "action": {
+                        "service": "test.automation",
+                        "data_template": {
+                            "some": t
+                            + " - {{ trigger.platform }} - {{ trigger.event.event_type }}"
+                        },
+                    },
+                }
+                for t in VEHICLE_STATUS_TYPES
+            ]
+        },
+    )
+
+    hass.states.async_set("sensor.101_vehicle_status", "standby")
+    hass.bus.async_fire("standby-event")
+    await hass.async_block_till_done()
+    assert len(service_calls) == 1
+    assert service_calls[0].data["some"] == "standby - event - standby-event"
+
+    hass.states.async_set("sensor.101_vehicle_status", "vehicle_detected")
+    hass.bus.async_fire("vehicle_detected-event")
+    await hass.async_block_till_done()
+    assert len(service_calls) == 2
+    assert (
+        service_calls[1].data["some"]
+        == "vehicle_detected - event - vehicle_detected-event"
+    )
+
+    hass.states.async_set("sensor.101_vehicle_status", "ready")
+    hass.bus.async_fire("ready-event")
+    await hass.async_block_till_done()
+    assert len(service_calls) == 3
+    assert service_calls[2].data["some"] == "ready - event - ready-event"
+
+    hass.states.async_set("sensor.101_vehicle_status", "no_power")
+    hass.bus.async_fire("no_power-event")
+    await hass.async_block_till_done()
+    assert len(service_calls) == 4
+    assert service_calls[3].data["some"] == "no_power - event - no_power-event"
+
+    hass.states.async_set("sensor.101_vehicle_status", "vehicle_error")
+    hass.bus.async_fire("vehicle_error-event")
+    await hass.async_block_till_done()
+    assert len(service_calls) == 5
+    assert (
+        service_calls[4].data["some"] == "vehicle_error - event - vehicle_error-event"
+    )
