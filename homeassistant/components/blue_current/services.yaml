@@ -55,3 +55,19 @@ set_price_based_charging:
       selector:
         time:
       required: true
+
+set_user_override:
+  fields:
+    device_id:
+      selector:
+        device:
+          integration: blue_current
+      required: true
+    current:
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: A
+          mode: box
+      required: true

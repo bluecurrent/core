@@ -31,7 +31,7 @@
         "default": "mdi:stop"
       },
       "boost": {
-        "default": "mdi:stop"
+        "default": "mdi:rocket-launch-outline"
       }
     }
   },
@@ -41,6 +41,9 @@
     },
     "set_price_based_charging": {
       "service": "mdi:cash-multiple"
+    },
+    "set_user_override": {
+      "service": "mdi:sine-wave"
     }
   }
 }

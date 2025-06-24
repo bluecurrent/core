@@ -75,11 +75,20 @@ async def async_setup_entry(
         #
         # device = dr.async_get(hass).devices[device_id]
 
+    def set_user_override(service_call: ServiceCall) -> None:
+        """Set user override."""
+        # device_id = service_call.data["device_id"]
+        # current = service_call.data["current"]
+        # print(device_id)
+        # print(current)
+
     hass.services.async_register(DOMAIN, "set_delayed_charging", smart_charging)
 
     hass.services.async_register(
         DOMAIN, "set_price_based_charging", price_based_charging
     )
+
+    hass.services.async_register(DOMAIN, "set_user_override", set_user_override)
 
     return True
 

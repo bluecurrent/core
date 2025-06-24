@@ -173,6 +173,20 @@
           "description": "Time when price based charging deactivates."
         }
       }
+    },
+    "set_user_override": {
+      "name": "Set the user override current",
+      "description": "Set the maximum current that can be used while Smart Charging.",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "The ID of the Blue Current charge point."
+        },
+        "current": {
+          "name": "Current",
+          "description": "If the current that Smart Charging would advise is higher thant the user override, it will advise the user override instead."
+        }
+      }
     }
   },
   "selector": {
