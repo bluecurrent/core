@@ -29,7 +29,18 @@
       },
       "stop_charge_session": {
         "default": "mdi:stop"
+      },
+      "boost": {
+        "default": "mdi:stop"
       }
+    }
+  },
+  "services": {
+    "set_delayed_charging": {
+      "service": "mdi:clock-time-four-outline"
+    },
+    "set_price_based_charging": {
+      "service": "mdi:cash-multiple"
     }
   }
 }

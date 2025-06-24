@@ -45,7 +45,17 @@ CHARGE_POINT_BUTTONS = (
         translation_key="stop_charge_session",
         function=lambda client, evse_id: client.stop_session(evse_id),
     ),
+    ChargePointButtonEntityDescription(
+        key="boost",
+        translation_key="boost",
+        function=lambda client, evse_id: boost_clicked(),
+    ),
 )
+
+
+async def boost_clicked() -> None:
+    """Non functioning boost function."""
+    return
 
 
 async def async_setup_entry(

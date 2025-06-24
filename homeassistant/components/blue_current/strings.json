@@ -123,6 +123,68 @@
       },
       "reset": {
         "name": "Reset"
+      },
+      "boost": {
+        "name": "Boost charge session"
+      }
+    }
+  },
+  "services": {
+    "set_delayed_charging": {
+      "name": "Turn on delayed charging",
+      "description": "Turn on delayed charging.",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "The ID of the Blue Current charge point."
+        },
+        "expected_departure_time": {
+          "name": "Expected departure time",
+          "description": ""
+        },
+        "expected_charging_session_size": {
+          "name": "Expected charging session size",
+          "description": ""
+        },
+        "immediately_charge": {
+          "name": "Immediately charge",
+          "description": "The ID of the Blue Current charge point."
+        }
+      }
+    },
+    "set_price_based_charging": {
+      "name": "Turn on price based charging",
+      "description": "Turn on price based charging.",
+      "fields": {
+        "device_id": {
+          "name": "Device ID",
+          "description": "The ID of the Blue Current charge point."
+        },
+        "days": {
+          "name": "Days that price based charging is activated.",
+          "description": ""
+        },
+        "start_time": {
+          "name": "Start time",
+          "description": "Time when price based charging becomes active"
+        },
+        "end_time": {
+          "name": "End time",
+          "description": "Time when price based charging deactivates."
+        }
+      }
+    }
+  },
+  "selector": {
+    "days": {
+      "options": {
+        "monday": "[%key:common::time::monday%]",
+        "tuesday": "[%key:common::time::tuesday%]",
+        "wednesday": "[%key:common::time::wednesday%]",
+        "thursday": "[%key:common::time::thursday%]",
+        "friday": "[%key:common::time::friday%]",
+        "saturday": "[%key:common::time::saturday%]",
+        "sunday": "[%key:common::time::sunday%]"
       }
     }
   }
