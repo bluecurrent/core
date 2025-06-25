@@ -18,6 +18,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_NAME, CONF_API_TOKEN, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+
+# from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .const import DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
@@ -56,7 +58,7 @@ async def async_setup_entry(
     config_entry.runtime_data = connector
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
-    def smart_charging(service_call: ServiceCall) -> None:
+    def set_price_based_charging(service_call: ServiceCall) -> None:
         """Set smart charging profile."""
         # device_id = service_call.data["device_id"]
         # expected_departure_time = service_call.data["expected_departure_time"]
@@ -66,14 +68,18 @@ async def async_setup_entry(
         # immediately_charge = service_call.data["immediately_charge"]
         # device = dr.async_get(hass).devices[device_id]
 
-    def price_based_charging(service_call: ServiceCall) -> None:
+    async def set_delayed_charging(service_call: ServiceCall) -> None:
         """Set price based charging."""
         # device_id = service_call.data["device_id"]
+        # device = dr.async_get(hass).devices[device_id]
+        #
         # selected_days = service_call.data["days"]
         # start_time = service_call.data["start_time"]
         # end_time = service_call.data["end_time"]
         #
-        # device = dr.async_get(hass).devices[device_id]
+        # evse_id = list(device.identifiers)[0][1]
+
+        # await client.set_delayed_charging(evse_id, True, [1, 2, 3], "10:00", "20:00")
 
     def set_user_override(service_call: ServiceCall) -> None:
         """Set user override."""
@@ -82,10 +88,10 @@ async def async_setup_entry(
         # print(device_id)
         # print(current)
 
-    hass.services.async_register(DOMAIN, "set_delayed_charging", smart_charging)
+    hass.services.async_register(DOMAIN, "set_delayed_charging", set_delayed_charging)
 
     hass.services.async_register(
-        DOMAIN, "set_price_based_charging", price_based_charging
+        DOMAIN, "set_price_based_charging", set_price_based_charging
     )
 
     hass.services.async_register(DOMAIN, "set_user_override", set_user_override)
