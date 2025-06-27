@@ -19,11 +19,11 @@ set_delayed_charging:
             - sunday
           multiple: true
       required: true
-    start_time:
+    end_time:
       selector:
         time:
       required: true
-    end_time:
+    start_time:
       selector:
         time:
       required: true
@@ -42,16 +42,16 @@ set_price_based_charging:
     expected_charging_session_size:
       selector:
         number:
-          min: 0
-          max: 100
+          min: 1
+          max: 80
           unit_of_measurement: kWh
           mode: box
       required: true
     immediately_charge:
       selector:
         number:
-          min: 0
-          max: 100
+          min: 1
+          max: 80
           unit_of_measurement: kWh
           mode: box
       required: true

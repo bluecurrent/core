@@ -15,14 +15,13 @@ from bluecurrent_api.exceptions import (
 )
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_NAME, CONF_API_TOKEN, Platform
+from homeassistant.const import CONF_API_TOKEN, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-
-# from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DOMAIN, EVSE_ID, LOGGER, MODEL_TYPE
+from .actions import set_delayed_charging, set_price_based_charging
+from .const import DOMAIN, EVSE_ID, LOGGER
 
 type BlueCurrentConfigEntry = ConfigEntry[Connector]
 
@@ -58,28 +57,13 @@ async def async_setup_entry(
     config_entry.runtime_data = connector
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
-    def set_price_based_charging(service_call: ServiceCall) -> None:
+    async def set_price_based_charging_call(service_call: ServiceCall) -> None:
         """Set smart charging profile."""
-        # device_id = service_call.data["device_id"]
-        # expected_departure_time = service_call.data["expected_departure_time"]
-        # expected_charging_session_size = service_call.data[
-        #     "expected_charging_session_size"
-        # ]
-        # immediately_charge = service_call.data["immediately_charge"]
-        # device = dr.async_get(hass).devices[device_id]
+        await set_price_based_charging(connector, service_call)
 
-    async def set_delayed_charging(service_call: ServiceCall) -> None:
+    async def set_delayed_charging_call(service_call: ServiceCall) -> None:
         """Set price based charging."""
-        # device_id = service_call.data["device_id"]
-        # device = dr.async_get(hass).devices[device_id]
-        #
-        # selected_days = service_call.data["days"]
-        # start_time = service_call.data["start_time"]
-        # end_time = service_call.data["end_time"]
-        #
-        # evse_id = list(device.identifiers)[0][1]
-
-        # await client.set_delayed_charging(evse_id, True, [1, 2, 3], "10:00", "20:00")
+        await set_delayed_charging(connector, service_call)
 
     def set_user_override(service_call: ServiceCall) -> None:
         """Set user override."""
@@ -88,10 +72,12 @@ async def async_setup_entry(
         # print(device_id)
         # print(current)
 
-    hass.services.async_register(DOMAIN, "set_delayed_charging", set_delayed_charging)
+    hass.services.async_register(
+        DOMAIN, "set_delayed_charging", set_delayed_charging_call
+    )
 
     hass.services.async_register(
-        DOMAIN, "set_price_based_charging", set_price_based_charging
+        DOMAIN, "set_price_based_charging", set_price_based_charging_call
     )
 
     hass.services.async_register(DOMAIN, "set_user_override", set_user_override)
@@ -146,22 +132,22 @@ class Connector:
         """Handle incoming chargepoint data."""
         await asyncio.gather(
             *(
-                self.handle_charge_point(
-                    entry[EVSE_ID], entry[MODEL_TYPE], entry[ATTR_NAME]
-                )
+                self.handle_charge_point(entry[EVSE_ID], entry)
                 for entry in charge_points_data
             ),
             self.client.get_grid_status(charge_points_data[0][EVSE_ID]),
         )
 
-    async def handle_charge_point(self, evse_id: str, model: str, name: str) -> None:
+    async def handle_charge_point(
+        self, evse_id: str, charge_point: dict[str, Any]
+    ) -> None:
         """Add the chargepoint and request their data."""
-        self.add_charge_point(evse_id, model, name)
+        self.add_charge_point(evse_id, charge_point)
         await self.client.get_status(evse_id)
 
-    def add_charge_point(self, evse_id: str, model: str, name: str) -> None:
+    def add_charge_point(self, evse_id: str, charge_point: dict[str, Any]) -> None:
         """Add a charge point to charge_points."""
-        self.charge_points[evse_id] = {MODEL_TYPE: model, ATTR_NAME: name}
+        self.charge_points[evse_id] = charge_point
 
     def update_charge_point(self, evse_id: str, data: dict) -> None:
         """Update the charge point data."""

@@ -143,12 +143,12 @@
           "description": ""
         },
         "start_time": {
-          "name": "Start time",
-          "description": "Time when price based charging becomes active"
+          "name": "Delay to",
+          "description": "Time when the delay ends."
         },
         "end_time": {
-          "name": "End time",
-          "description": "Time when price based charging deactivates."
+          "name": "Delay from",
+          "description": "Time when the delay starts."
         }
       }
     },
