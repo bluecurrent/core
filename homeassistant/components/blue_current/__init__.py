@@ -59,11 +59,13 @@ async def async_setup_entry(
 
     async def set_price_based_charging_call(service_call: ServiceCall) -> None:
         """Set smart charging profile."""
-        await set_price_based_charging(connector, service_call)
+        await set_price_based_charging(
+            hass, client, connector.charge_points, service_call
+        )
 
     async def set_delayed_charging_call(service_call: ServiceCall) -> None:
         """Set price based charging."""
-        await set_delayed_charging(connector, service_call)
+        await set_delayed_charging(hass, client, connector.charge_points, service_call)
 
     def set_user_override(service_call: ServiceCall) -> None:
         """Set user override."""

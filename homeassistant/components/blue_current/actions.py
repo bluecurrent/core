@@ -5,25 +5,22 @@ from typing import Any
 
 from bluecurrent_api import Client
 
-from homeassistant.core import ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall
 
-from . import Connector
 from .const import DELAYED_CHARGING, PRICE_BASED_CHARGING, SMART_CHARGING, VALUE
-
-# from homeassistant.exceptions import ServiceValidationError
-# from homeassistant.helpers import device_registry as dr
 
 
 async def set_price_based_charging(
-    connector: Connector, service_call: ServiceCall
+    hass: HomeAssistant,
+    client: Client,
+    charge_points: dict[str, dict],
+    service_call: ServiceCall,
 ) -> None:
     """Set smart charging profile."""
-
+    #
     # def check_session_size(size: int) -> bool:
     #     """Check if the given session size is between or equal to 1 and 80."""
     #     return 1 <= size <= 80
-    #
-    # client = connector.client
     #
     # device_id = service_call.data["device_id"]
     # expected_departure_time = service_call.data["expected_departure_time"]
@@ -39,10 +36,10 @@ async def set_price_based_charging(
     # ):
     #     raise ServiceValidationError
     #
-    # device = dr.async_get(connector.hass).devices[device_id]
+    # device = dr.async_get(hass).devices[device_id]
     # evse_id = list(device.identifiers)[0][1]
     #
-    # profile = get_current_smart_charging_profile(connector.charge_points[evse_id])
+    # profile = get_current_smart_charging_profile(charge_points[evse_id])
     # await switch_profile_if_needed(evse_id, client, profile, PRICE_BASED_CHARGING)
     #
     # await client.set_price_based_settings(
@@ -53,12 +50,16 @@ async def set_price_based_charging(
     # )
 
 
-async def set_delayed_charging(connector: Connector, service_call: ServiceCall) -> None:
+async def set_delayed_charging(
+    hass: HomeAssistant,
+    client: Client,
+    charge_points: dict[str, dict],
+    service_call: ServiceCall,
+) -> None:
     """Set price based charging."""
-    # client = connector.client
     #
     # device_id = service_call.data["device_id"]
-    # device = dr.async_get(connector.hass).devices[device_id]
+    # device = dr.async_get(hass).devices[device_id]
     #
     # days_to_number = {
     #     "monday": 1,
@@ -72,7 +73,7 @@ async def set_delayed_charging(connector: Connector, service_call: ServiceCall) 
     #
     # selected_days = service_call.data["days"]
     #
-    # day_numbers = list(map(lambda day: days_to_number[day], selected_days))
+    # day_numbers = [days_to_number[day] for day in selected_days]
     # start_time: str = service_call.data["start_time"]
     # end_time = service_call.data["end_time"]
     # if not check_time(start_time) or not check_time(end_time):
@@ -83,7 +84,7 @@ async def set_delayed_charging(connector: Connector, service_call: ServiceCall) 
     #
     # evse_id = list(device.identifiers)[0][1]
     #
-    # profile = get_current_smart_charging_profile(connector.charge_points[evse_id])
+    # profile = get_current_smart_charging_profile(charge_points[evse_id])
     # await switch_profile_if_needed(evse_id, client, profile, DELAYED_CHARGING)
     #
     # await client.save_scheduled_delayed_charging(
