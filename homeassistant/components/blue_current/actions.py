@@ -9,6 +9,9 @@ from homeassistant.core import HomeAssistant, ServiceCall
 
 from .const import DELAYED_CHARGING, PRICE_BASED_CHARGING, SMART_CHARGING, VALUE
 
+# from ...exceptions import ServiceValidationError
+# from homeassistant.helpers import device_registry as dr
+
 
 async def set_price_based_charging(
     hass: HomeAssistant,
@@ -39,7 +42,7 @@ async def set_price_based_charging(
     # evse_id = list(device.identifiers)[0][1]
     #
     # profile = get_current_smart_charging_profile(charge_points[evse_id])
-    # await switch_profile_if_needed(evse_id, client, profile, PRICE_BASED_CHARGING)
+    # await switch_profile_if_needed(evse_id, client, charge_points, profile, PRICE_BASED_CHARGING)
     #
     # await client.set_price_based_settings(
     #     evse_id,
@@ -83,15 +86,19 @@ async def set_delayed_charging(
     # evse_id = list(device.identifiers)[0][1]
     #
     # profile = get_current_smart_charging_profile(charge_points[evse_id])
-    # await switch_profile_if_needed(evse_id, client, profile, DELAYED_CHARGING)
+    # await switch_profile_if_needed(evse_id, client, charge_points, profile, DELAYED_CHARGING)
     #
-    # await client.save_scheduled_delayed_charging(
+    # await client.set_delayed_charging_settings(
     #     evse_id, day_numbers, start_time, end_time
     # )
 
 
 async def switch_profile_if_needed(
-    evse_id: str, client: Client, current_profile: str | None, new_profile: str
+    evse_id: str,
+    client: Client,
+    charge_points: dict[str, dict],
+    current_profile: str | None,
+    new_profile: str,
 ) -> None:
     """Change to a new smart charging profile. Turn the previous profile off when this profile was enabled."""
     # change_profile_functions = {
@@ -101,8 +108,11 @@ async def switch_profile_if_needed(
     #
     # if current_profile != new_profile:
     #     await change_profile_functions[new_profile](evse_id, True)
+    #     charge_points[evse_id][new_profile][VALUE] = True
     #     if current_profile is not None:
+    #         charge_points[evse_id][current_profile][VALUE] = False
     #         await change_profile_functions[current_profile](evse_id, False)
+    #
 
 
 def get_current_smart_charging_profile(charge_point: dict[str, Any]) -> str | None:
