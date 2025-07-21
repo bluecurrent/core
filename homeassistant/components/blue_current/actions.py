@@ -17,7 +17,6 @@ async def set_price_based_charging(
     service_call: ServiceCall,
 ) -> None:
     """Set smart charging profile."""
-    #
     # def check_session_size(size: int) -> bool:
     #     """Check if the given session size is between or equal to 1 and 80."""
     #     return 1 <= size <= 80
@@ -25,7 +24,7 @@ async def set_price_based_charging(
     # device_id = service_call.data["device_id"]
     # expected_departure_time = service_call.data["expected_departure_time"]
     # if not check_time(expected_departure_time):
-    #     raise ServiceValidationError
+    #     raise ServiceValidationError("Invalid time format")
     #
     # expected_departure_time = remove_seconds(expected_departure_time)
     # expected_charging_session_size = service_call.data["expected_charging_session_size"]
@@ -34,7 +33,7 @@ async def set_price_based_charging(
     # if not check_session_size(expected_charging_session_size) or not check_session_size(
     #     immediately_charge
     # ):
-    #     raise ServiceValidationError
+    #     raise ServiceValidationError("Invalid session size. Must be between or equal to 1 and 80")
     #
     # device = dr.async_get(hass).devices[device_id]
     # evse_id = list(device.identifiers)[0][1]
@@ -57,7 +56,6 @@ async def set_delayed_charging(
     service_call: ServiceCall,
 ) -> None:
     """Set price based charging."""
-    #
     # device_id = service_call.data["device_id"]
     # device = dr.async_get(hass).devices[device_id]
     #
@@ -77,7 +75,7 @@ async def set_delayed_charging(
     # start_time: str = service_call.data["start_time"]
     # end_time = service_call.data["end_time"]
     # if not check_time(start_time) or not check_time(end_time):
-    #     raise ServiceValidationError
+    #     raise ServiceValidationError("Invalid time format")
     #
     # start_time = remove_seconds(start_time)
     # end_time = remove_seconds(end_time)

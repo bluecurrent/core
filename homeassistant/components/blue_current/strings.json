@@ -161,11 +161,11 @@
           "description": "The ID of the Blue Current charge point."
         },
         "expected_departure_time": {
-          "name": "Expected departure time",
+          "name": "Expected departure time.",
           "description": ""
         },
         "expected_charging_session_size": {
-          "name": "Expected charging session size",
+          "name": "Expected charging session size.",
           "description": ""
         },
         "immediately_charge": {
