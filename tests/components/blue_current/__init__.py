@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 from bluecurrent_api import Client
 
 from homeassistant.components.blue_current import EVSE_ID, PLUG_AND_CHARGE
-from homeassistant.components.blue_current.const import PUBLIC_CHARGING
+from homeassistant.components.blue_current.const import PUBLIC_CHARGING, SMART_CHARGING
 from homeassistant.core import HomeAssistant
 
 from tests.common import MockConfigEntry
@@ -25,6 +25,7 @@ DEFAULT_CHARGE_POINT = {
     "model_type": "",
     "name": "",
     "activity": "available",
+    SMART_CHARGING: False,
     **DEFAULT_CHARGE_POINT_OPTIONS,
 }
 

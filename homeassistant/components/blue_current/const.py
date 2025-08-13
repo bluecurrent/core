@@ -19,3 +19,7 @@ AVAILABLE = "available"
 LINKED_CHARGE_CARDS = "linked_charge_cards_only"
 PUBLIC_CHARGING = "public_charging"
 ACTIVITY = "activity"
+
+DELAYED_CHARGING = "delayed_charging"
+PRICE_BASED_CHARGING = "price_based_charging"
+SMART_CHARGING = "smart_charging"
