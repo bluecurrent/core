@@ -16,7 +16,8 @@ from homeassistant.components.button import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import BlueCurrentConfigEntry, Connector
+from . import EVSE_ID, BlueCurrentConfigEntry, Connector
+from .const import DELAYED_CHARGING, PRICE_BASED_CHARGING, SMART_CHARGING, VALUE
 from .entity import ChargepointEntity
 
 
@@ -24,38 +25,44 @@ from .entity import ChargepointEntity
 class ChargePointButtonEntityDescription(ButtonEntityDescription):
     """Describes a Blue Current button entity."""
 
-    function: Callable[[Client, str], Coroutine[Any, Any, None]]
+    function: Callable[[Client, dict[str, Any]], Coroutine[Any, Any, None]]
+
+
+async def boost_charge_session(client: Client, charge_point: dict[str, Any]) -> None:
+    """Override the smart charging profile, if active."""
+    if charge_point[SMART_CHARGING]:
+        if charge_point[PRICE_BASED_CHARGING][VALUE]:
+            await client.override_price_based_charging_profile(
+                charge_point[EVSE_ID], True
+            )
+        if charge_point[DELAYED_CHARGING][VALUE]:
+            await client.override_delayed_charging_profile(charge_point[EVSE_ID], True)
 
 
 CHARGE_POINT_BUTTONS = (
     ChargePointButtonEntityDescription(
         key="reset",
         translation_key="reset",
-        function=lambda client, evse_id: client.reset(evse_id),
+        function=lambda client, charge_point: client.reset(charge_point[EVSE_ID]),
         device_class=ButtonDeviceClass.RESTART,
     ),
     ChargePointButtonEntityDescription(
         key="reboot",
         translation_key="reboot",
-        function=lambda client, evse_id: client.reboot(evse_id),
+        function=lambda client, charge_point: client.reboot(charge_point[EVSE_ID]),
         device_class=ButtonDeviceClass.RESTART,
     ),
     ChargePointButtonEntityDescription(
         key="stop_charge_session",
         translation_key="stop_charge_session",
-        function=lambda client, evse_id: client.stop_session(evse_id),
+        function=lambda client, charge_point: client.stop_session(
+            charge_point[EVSE_ID]
+        ),
     ),
     ChargePointButtonEntityDescription(
-        key="boost",
-        translation_key="boost",
-        function=lambda client, evse_id: boost_clicked(),
+        key="boost", translation_key="boost", function=boost_charge_session
     ),
 )
-
-
-async def boost_clicked() -> None:
-    """Non functioning boost function."""
-    return
 
 
 async def async_setup_entry(
@@ -96,4 +103,5 @@ class ChargePointButton(ChargepointEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self.entity_description.function(self.connector.client, self.evse_id)
+        charge_point = self.connector.charge_points[self.evse_id]
+        await self.entity_description.function(self.connector.client, charge_point)
