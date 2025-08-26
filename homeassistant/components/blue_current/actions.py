@@ -1,16 +1,16 @@
 """Actions for Blue Current integration."""
 
+from datetime import timedelta
 import re
 from typing import Any
 
 from bluecurrent_api import Client
 
+# from bluecurrent_api.types import OverrideCurrentPayload
 from homeassistant.core import HomeAssistant, ServiceCall
 
-from .const import DELAYED_CHARGING, PRICE_BASED_CHARGING, SMART_CHARGING, VALUE
-
 # from ...exceptions import ServiceValidationError
-# from homeassistant.helpers import device_registry as dr
+from .const import DELAYED_CHARGING, PRICE_BASED_CHARGING, SMART_CHARGING, VALUE
 
 
 async def set_price_based_charging(
@@ -115,6 +115,61 @@ async def switch_profile_if_needed(
     #
 
 
+async def set_user_override(
+    hass: HomeAssistant,
+    client: Client,
+    charge_points: dict[str, dict],
+    service_call: ServiceCall,
+) -> None:
+    """Set user override action."""
+    # device_id = service_call.data["device_id"]
+    # device = dr.async_get(hass).devices[device_id]
+    #
+    # current = service_call.data["current"]
+    #
+    # override_start_time = service_call.data["override_start_time"]
+    # override_start_days = service_call.data["override_start_days"]
+    #
+    # override_end_time = service_call.data["override_end_time"]
+    # override_end_days = service_call.data["override_end_days"]
+    #
+    # days_to_code = {
+    #     "monday": "MO",
+    #     "tuesday": "TU",
+    #     "wednesday": "WE",
+    #     "thursday": "TH",
+    #     "friday": "FR",
+    #     "saturday": "SA",
+    #     "sunday": "SU",
+    # }
+    #
+    # start_day_code = [days_to_code[day] for day in override_start_days]
+    # end_day_code = [days_to_code[day] for day in override_end_days]
+    #
+    # start_time = timedelta_to_str(override_start_time)
+    # end_time = timedelta_to_str(override_end_time)
+    #
+    # evse_id = next(
+    #     identifier[1] for identifier in device.identifiers if identifier[0] == DOMAIN
+    # )
+    #
+    # current_profile = get_current_smart_charging_profile(charge_points[evse_id])
+    #
+    # if current_profile is PRICE_BASED_CHARGING or current_profile is DELAYED_CHARGING:
+    #     await client.override_price_based_charging_profile(evse_id, True)
+    #
+    # await client.set_user_override_current(
+    #     OverrideCurrentPayload(
+    #         chargepoints=[evse_id],
+    #         overridestarttime=start_time,
+    #         overridestartdays=start_day_code,
+    #         overridestoptime=end_time,
+    #         overridestopdays=end_day_code,
+    #         overridevalue=current,
+    #     )
+    # )
+
+
 def get_current_smart_charging_profile(charge_point: dict[str, Any]) -> str | None:
     """Get the currently active smart charging profile for the given charge point."""
     if charge_point[SMART_CHARGING]:
@@ -135,3 +190,11 @@ def remove_seconds(time: str) -> str:
     if time.count(":") == 2:
         return time.rsplit(":", 1)[0]
     return time
+
+
+def timedelta_to_str(time: timedelta) -> str:
+    """Convert time delta to an acceptable string format."""
+    seconds = int(time.total_seconds())
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    return f"{hours:02d}:{minutes:02d}"

@@ -71,3 +71,39 @@ set_user_override:
           unit_of_measurement: A
           mode: box
       required: true
+    override_start_days:
+      selector:
+        select:
+          translation_key: days
+          options:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+          multiple: true
+      required: true
+    override_start_time:
+      selector:
+        time:
+      required: true
+    override_end_days:
+      selector:
+        select:
+          translation_key: days
+          options:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+          multiple: true
+      required: true
+    override_end_time:
+      selector:
+        time:
+      required: true

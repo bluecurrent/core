@@ -185,6 +185,22 @@
         "current": {
           "name": "Current",
           "description": "If the current that Smart Charging would advise is higher thant the user override, it will advise the user override instead."
+        },
+        "override_start_days": {
+          "name": "Start days",
+          "description": "The days the override will start."
+        },
+        "override_start_time": {
+          "name": "Start time",
+          "description": "The time the override will start."
+        },
+        "override_end_days": {
+          "name": "End days",
+          "description": "The days the override will end."
+        },
+        "override_end_time": {
+          "name": "End time",
+          "description": "The time the override will end."
         }
       }
     }

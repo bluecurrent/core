@@ -13,14 +13,16 @@ from bluecurrent_api.exceptions import (
     RequestLimitReached,
     WebsocketError,
 )
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_TOKEN, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .actions import set_delayed_charging, set_price_based_charging
+from .actions import set_delayed_charging, set_price_based_charging, set_user_override
 from .const import DOMAIN, EVSE_ID, LOGGER
 
 type BlueCurrentConfigEntry = ConfigEntry[Connector]
@@ -33,6 +35,19 @@ DELAY = 5
 GRID = "GRID"
 OBJECT = "object"
 VALUE_TYPES = ["CH_STATUS"]
+
+DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+SERVICE_SET_USER_OVERRIDE_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+        vol.Required("current"): cv.positive_int,
+        vol.Required("override_start_time"): cv.time_period,
+        vol.Required("override_start_days"): cv.multi_select(DAYS),
+        vol.Required("override_end_time"): cv.time_period,
+        vol.Required("override_end_days"): cv.multi_select(DAYS),
+    }
+)
 
 
 async def async_setup_entry(
@@ -67,12 +82,9 @@ async def async_setup_entry(
         """Set price based charging."""
         await set_delayed_charging(hass, client, connector.charge_points, service_call)
 
-    def set_user_override(service_call: ServiceCall) -> None:
+    async def set_user_override_call(service_call: ServiceCall) -> None:
         """Set user override."""
-        # device_id = service_call.data["device_id"]
-        # current = service_call.data["current"]
-        # print(device_id)
-        # print(current)
+        await set_user_override(hass, client, connector.charge_points, service_call)
 
     hass.services.async_register(
         DOMAIN, "set_delayed_charging", set_delayed_charging_call
@@ -82,7 +94,12 @@ async def async_setup_entry(
         DOMAIN, "set_price_based_charging", set_price_based_charging_call
     )
 
-    hass.services.async_register(DOMAIN, "set_user_override", set_user_override)
+    hass.services.async_register(
+        DOMAIN,
+        "set_user_override",
+        set_user_override_call,
+        SERVICE_SET_USER_OVERRIDE_SCHEMA,
+    )
 
     return True
 
