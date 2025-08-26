@@ -20,23 +20,14 @@ async def set_price_based_charging(
     service_call: ServiceCall,
 ) -> None:
     """Set smart charging profile."""
-    # def check_session_size(size: int) -> bool:
-    #     """Check if the given session size is between or equal to 1 and 80."""
-    #     return 1 <= size <= 80
-    #
     # device_id = service_call.data["device_id"]
     # expected_departure_time = service_call.data["expected_departure_time"]
     # if not check_time(expected_departure_time):
     #     raise ServiceValidationError("Invalid time format")
     #
-    # expected_departure_time = remove_seconds(expected_departure_time)
+    # expected_departure_time = timedelta_to_str(expected_departure_time)
     # expected_charging_session_size = service_call.data["expected_charging_session_size"]
     # immediately_charge = service_call.data["immediately_charge"]
-    #
-    # if not check_session_size(expected_charging_session_size) or not check_session_size(
-    #     immediately_charge
-    # ):
-    #     raise ServiceValidationError("Invalid session size. Must be between or equal to 1 and 80")
     #
     # device = dr.async_get(hass).devices[device_id]
     # evse_id = list(device.identifiers)[0][1]
@@ -75,13 +66,13 @@ async def set_delayed_charging(
     # selected_days = service_call.data["days"]
     #
     # day_numbers = [days_to_number[day] for day in selected_days]
-    # start_time: str = service_call.data["start_time"]
+    # start_time = service_call.data["start_time"]
     # end_time = service_call.data["end_time"]
     # if not check_time(start_time) or not check_time(end_time):
     #     raise ServiceValidationError("Invalid time format")
     #
-    # start_time = remove_seconds(start_time)
-    # end_time = remove_seconds(end_time)
+    # start_time = timedelta_to_str(start_time)
+    # end_time = timedelta_to_str(end_time)
     #
     # evse_id = list(device.identifiers)[0][1]
     #
@@ -183,13 +174,6 @@ def get_current_smart_charging_profile(charge_point: dict[str, Any]) -> str | No
 def check_time(time: str) -> bool:
     """Check if time format is correctly. Seconds are optional, because they are not send to the API."""
     return bool(re.compile("^[0-2][0-9]:[0-5][0-9](:[0-5][0-9])*$").match(time))
-
-
-def remove_seconds(time: str) -> str:
-    """Remove the seconds from the time, when in the time string."""
-    if time.count(":") == 2:
-        return time.rsplit(":", 1)[0]
-    return time
 
 
 def timedelta_to_str(time: timedelta) -> str:

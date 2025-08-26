@@ -49,6 +49,24 @@ SERVICE_SET_USER_OVERRIDE_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_SET_PRICE_BASED_CHARGING_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+        vol.Required("expected_departure_time"): cv.time_period,
+        vol.Required("expected_charging_session_size"): vol.Range(1, 80),
+        vol.Required("immediately_charge"): vol.Range(1, 80),
+    }
+)
+
+SERVICE_DELAYED_CHARGING_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): cv.string,
+        vol.Required("days"): cv.multi_select(DAYS),
+        vol.Required("end_time"): cv.time_period,
+        vol.Required("start_time"): cv.time_period,
+    }
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: BlueCurrentConfigEntry
@@ -87,11 +105,17 @@ async def async_setup_entry(
         await set_user_override(hass, client, connector.charge_points, service_call)
 
     hass.services.async_register(
-        DOMAIN, "set_delayed_charging", set_delayed_charging_call
+        DOMAIN,
+        "set_delayed_charging",
+        set_delayed_charging_call,
+        SERVICE_DELAYED_CHARGING_SCHEMA,
     )
 
     hass.services.async_register(
-        DOMAIN, "set_price_based_charging", set_price_based_charging_call
+        DOMAIN,
+        "set_price_based_charging",
+        set_price_based_charging_call,
+        SERVICE_SET_PRICE_BASED_CHARGING_SCHEMA,
     )
 
     hass.services.async_register(
