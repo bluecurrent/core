@@ -58,11 +58,11 @@ set_price_based_charging:
 
 set_user_override:
   fields:
-    device_id:
+    device_ids:
       selector:
         device:
           integration: blue_current
-      required: true
+          multiple: true
     current:
       selector:
         number:

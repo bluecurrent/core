@@ -1,5 +1,8 @@
 """tests for Blue Current actions."""
 
+from unittest.mock import call
+
+from bluecurrent_api.types import OverrideCurrentPayload
 import pytest
 
 from homeassistant.components.blue_current import DOMAIN
@@ -342,3 +345,238 @@ async def test_switch_profile_action_with_previous_selected_profile(
 
     client.set_price_based_charging.assert_called_once_with("101", False)
     client.set_delayed_charging.assert_called_once_with("101", True)
+
+
+async def test_user_override_with_new_schedule(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Test user override with a new schedule."""
+    integration = await init_integration(hass, config_entry, Platform.BUTTON)
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "set_user_override",
+        {
+            "device_ids": list(dr.async_get(hass).devices),
+            "current": 10,
+            "override_start_time": "10:00:00",
+            "override_end_time": "20:00:00",
+            "override_start_days": ["monday", "thursday"],
+            "override_end_days": ["wednesday", "friday"],
+        },
+        blocking=True,
+    )
+
+    client.set_user_override_current.assert_called_once_with(
+        OverrideCurrentPayload(
+            chargepoints=["101", "102"],
+            overridestarttime="10:00",
+            overridestartdays=["MO", "TH"],
+            overridestoptime="20:00",
+            overridestopdays=["WE", "FR"],
+            overridevalue=10,
+        )
+    )
+
+
+async def test_user_override_with_existing_schedule(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Test user override with an already existing schedule."""
+    schedules = [
+        {
+            "schedule_id": "TEST_ID",
+            "charge_points": ["101", "102"],
+            "current": 10,
+            "start_time": "10:00",
+            "end_time": "20:00",
+            "override_start_days": "MO,TH",
+            "override_end_days": "WE,FR",
+        }
+    ]
+
+    integration = await init_integration(
+        hass, config_entry, Platform.BUTTON, schedules=schedules
+    )
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "set_user_override",
+        {
+            "device_ids": [
+                list(dr.async_get(hass).devices)[0],
+                list(dr.async_get(hass).devices)[1],
+            ],
+            "current": 15,
+            "override_start_time": "15:00",
+            "override_end_time": "22:00",
+            "override_start_days": ["saturday", "thursday"],
+            "override_end_days": ["wednesday", "sunday"],
+        },
+        blocking=True,
+    )
+
+    client.edit_user_override_current.assert_called_once_with(
+        "TEST_ID",
+        OverrideCurrentPayload(
+            chargepoints=["101", "102"],
+            overridestarttime="15:00",
+            overridestartdays=["SA", "TH"],
+            overridestoptime="22:00",
+            overridestopdays=["WE", "SU"],
+            overridevalue=15,
+        ),
+    )
+
+
+async def test_user_override_with_different_schedule(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Test user override with different schedules for the charging points."""
+    schedules = [
+        {
+            "schedule_id": "TEST_ID",
+            "charge_points": ["101"],
+            "current": 10,
+            "start_time": "10:00",
+            "end_time": "20:00",
+            "override_start_days": "MO,TH",
+            "override_end_days": "WE,FR",
+        },
+        {
+            "schedule_id": "TEST_ID_1",
+            "charge_points": ["102"],
+            "current": 10,
+            "start_time": "10:00",
+            "end_time": "20:00",
+            "override_start_days": "MO,TH",
+            "override_end_days": "WE,FR",
+        },
+    ]
+
+    integration = await init_integration(
+        hass, config_entry, Platform.BUTTON, schedules=schedules
+    )
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "set_user_override",
+        {
+            "device_ids": [
+                list(dr.async_get(hass).devices)[0],
+                list(dr.async_get(hass).devices)[1],
+            ],
+            "current": 15,
+            "override_start_time": "15:00:00",
+            "override_end_time": "22:00:00",
+            "override_start_days": ["saturday", "thursday"],
+            "override_end_days": ["wednesday", "sunday"],
+        },
+        blocking=True,
+    )
+
+    client.set_user_override_current.assert_called_once_with(
+        OverrideCurrentPayload(
+            chargepoints=["101", "102"],
+            overridestarttime="15:00",
+            overridestartdays=["SA", "TH"],
+            overridestoptime="22:00",
+            overridestopdays=["WE", "SU"],
+            overridevalue=15,
+        )
+    )
+
+    assert call("TEST_ID") in client.clear_user_override_current.call_args_list
+    assert call("TEST_ID_1") in client.clear_user_override_current.call_args_list
+
+
+async def test_user_override_with_other_chargepoints(
+    hass: HomeAssistant, config_entry: MockConfigEntry
+) -> None:
+    """Test user override with different change points in the schedule."""
+    schedules = [
+        {
+            "schedule_id": "TEST_ID",
+            "charge_points": ["101", "103"],
+            "current": 10,
+            "start_time": "10:00",
+            "end_time": "15:00",
+            "override_start_days": "MO,TH",
+            "override_end_days": "WE,FR",
+        },
+        {
+            "schedule_id": "TEST_ID_1",
+            "charge_points": ["102", "104"],
+            "current": 10,
+            "start_time": "10:00",
+            "end_time": "20:00",
+            "override_start_days": "MO,TH",
+            "override_end_days": "WE,FR",
+        },
+    ]
+
+    integration = await init_integration(
+        hass, config_entry, Platform.BUTTON, schedules=schedules
+    )
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "set_user_override",
+        {
+            "device_ids": [
+                list(dr.async_get(hass).devices)[0],
+                list(dr.async_get(hass).devices)[1],
+            ],
+            "current": 15,
+            "override_start_time": "15:00:00",
+            "override_end_time": "22:00:00",
+            "override_start_days": ["saturday", "thursday"],
+            "override_end_days": ["wednesday", "sunday"],
+        },
+        blocking=True,
+    )
+
+    client.set_user_override_current.assert_called_once_with(
+        OverrideCurrentPayload(
+            chargepoints=["101", "102"],
+            overridestarttime="15:00",
+            overridestartdays=["SA", "TH"],
+            overridestoptime="22:00",
+            overridestopdays=["WE", "SU"],
+            overridevalue=15,
+        )
+    )
+
+    assert (
+        call(
+            "TEST_ID",
+            OverrideCurrentPayload(
+                chargepoints=["103"],
+                overridestarttime="10:00",
+                overridestartdays=["MO", "TH"],
+                overridestoptime="15:00",
+                overridestopdays=["WE", "FR"],
+                overridevalue=10,
+            ),
+        )
+        in client.edit_user_override_current.call_args_list
+    )
+
+    assert (
+        call(
+            "TEST_ID_1",
+            OverrideCurrentPayload(
+                chargepoints=["104"],
+                overridestarttime="10:00",
+                overridestartdays=["MO", "TH"],
+                overridestoptime="20:00",
+                overridestopdays=["WE", "FR"],
+                overridevalue=10,
+            ),
+        )
+        in client.edit_user_override_current.call_args_list
+    )
