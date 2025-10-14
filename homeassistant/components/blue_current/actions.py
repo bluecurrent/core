@@ -5,9 +5,7 @@ import re
 from typing import Any
 
 from bluecurrent_api import Client
-from bluecurrent_api.types import (
-    OverrideCurrentPayload,
-)
+from bluecurrent_api.types import OverrideCurrentPayload
 
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import device_registry as dr
@@ -18,9 +16,9 @@ from .const import (
     DELAYED_CHARGING,
     DEVICE_IDS,
     DOMAIN,
-    END_TIME,
     FRIDAY,
     MONDAY,
+    OVERRIDE_CURRENT,
     OVERRIDE_END_DAYS,
     OVERRIDE_END_TIME,
     OVERRIDE_START_DAYS,
@@ -29,6 +27,7 @@ from .const import (
     SATURDAY,
     SMART_CHARGING,
     START_TIME,
+    STOP_TIME,
     SUNDAY,
     THURSDAY,
     TUESDAY,
@@ -133,7 +132,6 @@ async def switch_profile_if_needed(
 async def set_user_override(
     hass: HomeAssistant,
     client: Client,
-    charge_points: dict[str, dict],
     schedules: dict[str, Any],
     service_call: ServiceCall,
 ) -> None:
@@ -193,6 +191,8 @@ async def set_user_override(
         overridevalue=current,
     )
 
+    # print(existing_schedule_ids)
+
     # When all charge points in the action has a schedule_id of None, no charge point has a schedule yet.
     if len(existing_schedule_ids) == 0:
         # Create schedule with new data.
@@ -201,47 +201,116 @@ async def set_user_override(
     # When the schedule id length is but not None, all charge points have the same schedule id.
     elif len(existing_schedule_ids) == 1:
         # Update schedule with new data.
-        await client.edit_user_override_current(
-            existing_schedule_ids[0], override_current_payload
-        )
-        # print("[1] edit user override for schedule: " + str(existing_schedule_ids[0]))
+        schedule_id = existing_schedule_ids[0]
+        schedule = schedules[schedule_id]
+
+        # Check if all charge points on the schedule are given in this action.
+        if set(evse_ids).issuperset(set(schedule["charge_points"])):
+            # print(evse_ids)
+            # print(schedule["charge_points"])
+            # print("ran")
+            await client.edit_user_override_current(
+                schedule_id, override_current_payload
+            )
+        else:
+            # When not all charge points are given, update the original schedule to remove the given charge points.
+            # print("[0.1] Schedule updated to remove charge points " + str(evse_ids))
+            # print("[0.2] Created new schedule for charge points " + str(evse_ids))
+            await remove_update_and_create(
+                client,
+                override_current_payload,
+                schedules,
+                evse_ids,
+                existing_schedule_ids,
+            )
+            # print("[0.3] done")
+
     # The charge points in the action have different or no schedule id.
     else:
-        # Remove charge points from schedule when they have a schedule ID
-        for schedule_id in existing_schedule_ids:
-            schedules[schedule_id][CHARGE_POINTS] = [
-                i for i in schedules[schedule_id][CHARGE_POINTS] if i not in evse_ids
-            ]
+        await remove_update_and_create(
+            client, override_current_payload, schedules, evse_ids, existing_schedule_ids
+        )
+
+
+async def remove_update_and_create(
+    client: Client,
+    override_current_payload: OverrideCurrentPayload,
+    schedules: dict[str, Any],
+    evse_ids: list[str],
+    existing_schedule_ids: list[str],
+) -> None:
+    """Remove, update or create a schedule based on conditions."""
+
+    # Remove charge points from schedule when they have a schedule ID
+    for schedule_id in existing_schedule_ids:
+        schedules[schedule_id][CHARGE_POINTS] = [
+            i for i in schedules[schedule_id][CHARGE_POINTS] if i not in evse_ids
+        ]
+        # print(
+        #     "[2] Removing existing schedule with ID "
+        #     + str(schedule_id)
+        #     + " "
+        #     + str(schedules[schedule_id]["charge_points"])
+        # )
+
+        if len(schedules[schedule_id][CHARGE_POINTS]) == 0:
+            schedules.pop(schedule_id)
             # print(
-            #     "[2] Removing existing schedule with ID "
-            #     + schedule_id
-            #     + " "
-            #     + str(schedules[schedule_id]["charge_points"])
+            #     "[3] Schedule with no charge points anymore removed "
+            #     + str(schedule_id)
             # )
+            await client.clear_user_override_current(schedule_id)
+            await client.wait_for_clear_override_current()
+        else:
+            schedule = schedules[schedule_id]
+            # Update the schedule so that the charge points is removed.
+            await client.edit_user_override_current(
+                schedule_id,
+                OverrideCurrentPayload(
+                    chargepoints=schedule[CHARGE_POINTS],
+                    overridestarttime=schedule[START_TIME],
+                    overridestartdays=schedule[OVERRIDE_START_DAYS],
+                    overridestoptime=schedule[STOP_TIME],
+                    overridestopdays=schedule[OVERRIDE_END_DAYS],
+                    overridevalue=schedule[OVERRIDE_CURRENT],
+                ),
+            )
 
-            if len(schedules[schedule_id][CHARGE_POINTS]) == 0:
-                schedules.pop(schedule_id)
-                # print(
-                #     "[3] Schedule with no charge points anymore removed " + schedule_id
-                # )
-                await client.clear_user_override_current(schedule_id)
-            else:
-                schedule = schedules[schedule_id]
-                # Update the schedule so that the user is removed.
-                await client.edit_user_override_current(
-                    schedule_id,
-                    OverrideCurrentPayload(
-                        chargepoints=schedule[CHARGE_POINTS],
-                        overridestarttime=schedule[START_TIME],
-                        overridestartdays=schedule[OVERRIDE_START_DAYS],
-                        overridestoptime=schedule[END_TIME],
-                        overridestopdays=schedule[OVERRIDE_END_DAYS],
-                        overridevalue=schedule["current"],
-                    ),
-                )
+            await client.wait_for_update_override_current()
 
-        # print("[4] Set new override current " + str(override_current_payload))
-        await client.set_user_override_current(override_current_payload)
+    # print("[4] Set new override current " + str(override_current_payload))
+    await client.set_user_override_current(override_current_payload)
+
+
+async def clear_user_override(
+    hass: HomeAssistant,
+    client: Client,
+    schedules: dict[str, Any],
+    service_call: ServiceCall,
+) -> None:
+    """Remove user override."""
+    device_ids = service_call.data[DEVICE_IDS]
+    devices = [dr.async_get(hass).devices[device_id] for device_id in device_ids]
+
+    evse_ids = [
+        next(
+            identifier[1]
+            for identifier in device.identifiers
+            if identifier[0] == DOMAIN
+        )
+        for device in devices
+    ]
+
+    schedule_ids = list(
+        {
+            schedule_id
+            for schedule_id, schedule in schedules.items()
+            if bool(set(schedule["charge_points"]) & set(evse_ids))
+        }
+    )
+
+    for schedule_id in schedule_ids:
+        await client.clear_user_override_current(schedule_id)
 
 
 def get_current_smart_charging_profile(charge_point: dict[str, Any]) -> str | None:

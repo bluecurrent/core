@@ -63,6 +63,7 @@ set_user_override:
         device:
           integration: blue_current
           multiple: true
+      required: true
     current:
       selector:
         number:
@@ -106,4 +107,13 @@ set_user_override:
     override_end_time:
       selector:
         time:
+      required: true
+
+clear_user_override:
+  fields:
+    device_ids:
+      selector:
+        device:
+          integration: blue_current
+          multiple: true
       required: true

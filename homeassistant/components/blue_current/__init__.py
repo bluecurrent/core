@@ -22,8 +22,23 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .actions import set_delayed_charging, set_price_based_charging, set_user_override
-from .const import DOMAIN, EVSE_ID, LOGGER, OVERRIDE_END_DAYS, OVERRIDE_START_DAYS
+from .actions import (
+    clear_user_override,
+    set_delayed_charging,
+    set_price_based_charging,
+    set_user_override,
+)
+from .const import (
+    CURRENT,
+    DEVICE_IDS,
+    DOMAIN,
+    EVSE_ID,
+    LOGGER,
+    OVERRIDE_END_DAYS,
+    OVERRIDE_END_TIME,
+    OVERRIDE_START_DAYS,
+    OVERRIDE_START_TIME,
+)
 
 type BlueCurrentConfigEntry = ConfigEntry[Connector]
 
@@ -40,12 +55,18 @@ DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sun
 
 SERVICE_SET_USER_OVERRIDE_SCHEMA = vol.Schema(
     {
-        vol.Required("device_ids"): vol.All(cv.ensure_list, [cv.string]),
-        vol.Required("current"): cv.positive_int,
-        vol.Required("override_start_time"): cv.time_period,
-        vol.Required("override_start_days"): cv.multi_select(DAYS),
-        vol.Required("override_end_time"): cv.time_period,
-        vol.Required("override_end_days"): cv.multi_select(DAYS),
+        vol.Required(DEVICE_IDS): vol.All(cv.ensure_list, [cv.string]),
+        vol.Required(CURRENT): cv.positive_int,
+        vol.Required(OVERRIDE_START_TIME): cv.time_period,
+        vol.Required(OVERRIDE_START_DAYS): cv.multi_select(DAYS),
+        vol.Required(OVERRIDE_END_TIME): cv.time_period,
+        vol.Required(OVERRIDE_END_DAYS): cv.multi_select(DAYS),
+    }
+)
+
+SERVICE_CLEAR_USER_OVERRIDE_SCHEMA = vol.Schema(
+    {
+        vol.Required(DEVICE_IDS): vol.All(cv.ensure_list, [cv.string]),
     }
 )
 
@@ -88,6 +109,7 @@ async def async_setup_entry(
 
     await client.wait_for_charge_points()
     await client.get_user_override_currents_list()
+
     config_entry.runtime_data = connector
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
@@ -103,9 +125,11 @@ async def async_setup_entry(
 
     async def set_user_override_call(service_call: ServiceCall) -> None:
         """Set user override."""
-        await set_user_override(
-            hass, client, connector.charge_points, connector.schedules, service_call
-        )
+        await set_user_override(hass, client, connector.schedules, service_call)
+
+    async def clear_user_override_call(service_call: ServiceCall) -> None:
+        """Clear user override."""
+        await clear_user_override(hass, client, connector.schedules, service_call)
 
     hass.services.async_register(
         DOMAIN,
@@ -126,6 +150,13 @@ async def async_setup_entry(
         "set_user_override",
         set_user_override_call,
         SERVICE_SET_USER_OVERRIDE_SCHEMA,
+    )
+
+    hass.services.async_register(
+        DOMAIN,
+        "clear_user_override",
+        clear_user_override_call,
+        SERVICE_CLEAR_USER_OVERRIDE_SCHEMA,
     )
 
     return True
@@ -178,6 +209,9 @@ class Connector:
         elif "LIST_OVERRIDE_CURRENT" in object_name:
             self.update_override_schedules(message[DATA])
 
+        elif object_name in ("POST_EDIT_OVERRIDE_CURRENT", "POST_SET_OVERRIDE_CURRENT"):
+            self.update_schedule(message[DATA])
+
     async def handle_charge_point_data(self, charge_points_data: list) -> None:
         """Handle incoming chargepoint data."""
         await asyncio.gather(
@@ -207,9 +241,11 @@ class Connector:
     def update_override_schedules(self, schedules: list[dict]) -> None:
         """Update the registered override schedules."""
         for schedule in schedules:
-            schedule[OVERRIDE_START_DAYS] = schedule[OVERRIDE_START_DAYS].split(",")
-            schedule[OVERRIDE_END_DAYS] = schedule[OVERRIDE_END_DAYS].split(",")
-            self.schedules[schedule["schedule_id"]] = schedule
+            self.update_schedule(schedule)
+
+    def update_schedule(self, schedule: dict) -> None:
+        """Add or register an existing schedule."""
+        self.schedules[schedule["schedule_id"]] = schedule
 
     def dispatch_charge_point_update_signal(self, evse_id: str) -> None:
         """Dispatch a charge point update signal."""

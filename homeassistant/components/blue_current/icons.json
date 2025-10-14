@@ -44,6 +44,9 @@
     },
     "set_user_override": {
       "service": "mdi:sine-wave"
+    },
+    "clear_user_override": {
+      "service": "mdi:close-thick"
     }
   }
 }

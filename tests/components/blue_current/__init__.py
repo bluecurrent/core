@@ -86,6 +86,7 @@ def create_client_mock(
         await client_mock.receiver({"object": "GRID_STATUS", "data": grid})
 
     async def get_user_override_currents_list() -> None:
+        """Get user override currents list."""
         await client_mock.receiver(
             {"object": "LIST_OVERRIDE_CURRENT", "data": schedules}
         )
@@ -95,7 +96,9 @@ def create_client_mock(
     client_mock.get_charge_points.side_effect = get_charge_points
     client_mock.get_status.side_effect = get_status
     client_mock.get_grid_status.side_effect = get_grid_status
-    client_mock.get_user_override_currents_list = get_user_override_currents_list
+    client_mock.get_user_override_currents_list.side_effect = (
+        get_user_override_currents_list
+    )
 
     return client_mock
 
