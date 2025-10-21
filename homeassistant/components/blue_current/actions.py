@@ -232,9 +232,39 @@ async def set_user_override(
         )
 
 
+async def clear_user_override(
+    hass: HomeAssistant,
+    client: Client,
+    schedules: dict[str, Any],
+    service_call: ServiceCall,
+) -> None:
+    """Remove user override."""
+    device_ids = service_call.data[DEVICE_IDS]
+    devices = [dr.async_get(hass).devices[device_id] for device_id in device_ids]
+
+    evse_ids = [
+        next(
+            identifier[1]
+            for identifier in device.identifiers
+            if identifier[0] == DOMAIN
+        )
+        for device in devices
+    ]
+
+    schedule_ids = list(
+        {
+            schedule_id
+            for schedule_id, schedule in schedules.items()
+            if bool(set(schedule["charge_points"]) & set(evse_ids))
+        }
+    )
+
+    await remove_update_and_create(client, None, schedules, evse_ids, schedule_ids)
+
+
 async def remove_update_and_create(
     client: Client,
-    override_current_payload: OverrideCurrentPayload,
+    override_current_payload: OverrideCurrentPayload | None,
     schedules: dict[str, Any],
     evse_ids: list[str],
     existing_schedule_ids: list[str],
@@ -279,38 +309,8 @@ async def remove_update_and_create(
             await client.wait_for_update_override_current()
 
     # print("[4] Set new override current " + str(override_current_payload))
-    await client.set_user_override_current(override_current_payload)
-
-
-async def clear_user_override(
-    hass: HomeAssistant,
-    client: Client,
-    schedules: dict[str, Any],
-    service_call: ServiceCall,
-) -> None:
-    """Remove user override."""
-    device_ids = service_call.data[DEVICE_IDS]
-    devices = [dr.async_get(hass).devices[device_id] for device_id in device_ids]
-
-    evse_ids = [
-        next(
-            identifier[1]
-            for identifier in device.identifiers
-            if identifier[0] == DOMAIN
-        )
-        for device in devices
-    ]
-
-    schedule_ids = list(
-        {
-            schedule_id
-            for schedule_id, schedule in schedules.items()
-            if bool(set(schedule["charge_points"]) & set(evse_ids))
-        }
-    )
-
-    for schedule_id in schedule_ids:
-        await client.clear_user_override_current(schedule_id)
+    if override_current_payload is not None:
+        await client.set_user_override_current(override_current_payload)
 
 
 def get_current_smart_charging_profile(charge_point: dict[str, Any]) -> str | None:

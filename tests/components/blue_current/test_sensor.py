@@ -97,12 +97,13 @@ async def test_sensors_created(
         hass,
         config_entry,
         "sensor",
-        charge_point,
+        [charge_point],
         charge_point_status | charge_point_status_timestamps,
         grid,
     )
 
     sensors = er.async_entries_for_config_entry(entity_registry, "uuid")
+
     assert len(charge_point_status) + len(charge_point_status_timestamps) + len(
         grid
     ) == len(sensors)
@@ -116,7 +117,7 @@ async def test_sensors(
 ) -> None:
     """Test the underlying sensors."""
     await init_integration(
-        hass, config_entry, "sensor", charge_point, charge_point_status, grid
+        hass, config_entry, "sensor", [charge_point], charge_point_status, grid
     )
 
     for entity_id, key in charge_point_entity_ids.items():
