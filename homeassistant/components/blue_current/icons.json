@@ -1,6 +1,9 @@
 {
   "entity": {
     "button": {
+      "boost": {
+        "default": "mdi:rocket-launch-outline"
+      },
       "reboot": {
         "default": "mdi:restart-alert"
       },
@@ -44,6 +47,15 @@
     }
   },
   "services": {
+    "clear_user_override": {
+      "service": "mdi:close-thick"
+    },
+    "set_delayed_charging": {
+      "service": "mdi:clock-outline"
+    },
+    "set_user_override": {
+      "service": "mdi:sine-wave"
+    },
     "start_charge_session": {
       "service": "mdi:play"
     }
