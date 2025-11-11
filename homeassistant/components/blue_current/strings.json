@@ -24,6 +24,9 @@
   },
   "entity": {
     "button": {
+      "boost": {
+        "name": "Boost charge session"
+      },
       "reboot": {
         "name": "Reboot"
       },
@@ -146,6 +149,9 @@
     },
     "no_config_entry": {
       "message": "Device has not a valid blue_current config entry."
+    },
+    "smart_charging_not_supported": {
+      "message": "Cannot use smart charging on this charge point."
     }
   },
   "options": {
@@ -159,6 +165,17 @@
     }
   },
   "selector": {
+    "days": {
+      "options": {
+        "friday": "[%key:common::time::friday%]",
+        "monday": "[%key:common::time::monday%]",
+        "saturday": "[%key:common::time::saturday%]",
+        "sunday": "[%key:common::time::sunday%]",
+        "thursday": "[%key:common::time::thursday%]",
+        "tuesday": "[%key:common::time::tuesday%]",
+        "wednesday": "[%key:common::time::wednesday%]"
+      }
+    },
     "select_charging_card": {
       "options": {
         "without_charging_card": "Without charging card"
@@ -166,6 +183,86 @@
     }
   },
   "services": {
+    "clear_user_override": {
+      "description": "Clear the override current on charge points.",
+      "fields": {
+        "device_ids": {
+          "description": "The ID's of the Blue Current charge point.",
+          "name": "Device ID's"
+        }
+      },
+      "name": "Clear the user override current"
+    },
+    "set_delayed_charging": {
+      "description": "Change the current smart charging profile to Delayed Charging.",
+      "fields": {
+        "days": {
+          "description": "",
+          "name": "Days that price based charging is activated."
+        },
+        "device_id": {
+          "description": "The ID of the Blue Current charge point.",
+          "name": "Device ID"
+        },
+        "end_time": {
+          "description": "Time when the delay starts.",
+          "name": "Delay from"
+        },
+        "start_time": {
+          "description": "Time when the delay ends.",
+          "name": "Delay to"
+        }
+      },
+      "name": "Set Delayed Charging profile"
+    },
+    "set_price_based_charging": {
+      "description": "Change the current smart charging profile to Price-Based Charging.",
+      "fields": {
+        "battery_size": {
+          "description": "The vehicle battery size in kWh.",
+          "name": "Battery size"
+        },
+        "device_id": {
+          "description": "The ID of the Blue Current charge point.",
+          "name": "Device ID"
+        },
+        "minimum_percentage": {
+          "description": "The minimum charging percentage the car needs, before starting smart charging.",
+          "name": "Minimum percentage"
+        }
+      },
+      "name": "Set Price-Based Charging profile"
+    },
+    "set_user_override": {
+      "description": "Set the maximum current that can be used while Smart Charging.",
+      "fields": {
+        "current": {
+          "description": "If the current that Smart Charging would advise is higher thant the user override, it will advise the user override instead.",
+          "name": "Current"
+        },
+        "device_ids": {
+          "description": "The ID's of the Blue Current charge point.",
+          "name": "Device ID's"
+        },
+        "override_end_days": {
+          "description": "The days the override will end.",
+          "name": "End days"
+        },
+        "override_end_time": {
+          "description": "The time the override will end.",
+          "name": "End time"
+        },
+        "override_start_days": {
+          "description": "The days the override will start.",
+          "name": "Start days"
+        },
+        "override_start_time": {
+          "description": "The time the override will start.",
+          "name": "Start time"
+        }
+      },
+      "name": "Set the user override current"
+    },
     "start_charge_session": {
       "description": "Starts a new charge session on a specified charge point.",
       "fields": {
@@ -179,6 +276,24 @@
         }
       },
       "name": "Start charge session"
+    },
+    "update_price_based_charging": {
+      "description": "Update the expected departure time and current battery percentage for the vehicle that is using price based charging.",
+      "fields": {
+        "current_percentage": {
+          "description": "",
+          "name": "Current battery percentage"
+        },
+        "device_id": {
+          "description": "The ID of the Blue Current charge point.",
+          "name": "Device ID"
+        },
+        "expected_departure_time": {
+          "description": "",
+          "name": "Expected departure time"
+        }
+      },
+      "name": "Update Price-Based Charging profile"
     }
   }
 }
