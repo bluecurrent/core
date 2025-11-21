@@ -48,6 +48,79 @@ async def test_price_based_charging_action(
     )
 
 
+async def test_price_based_charging_action_without_parameters(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    price_based_charging_charge_point: dict[str, Any],
+) -> None:
+    """Test the set price based charging action."""
+    integration = await init_integration(
+        hass, config_entry, Platform.BUTTON, [price_based_charging_charge_point]
+    )
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "set_price_based_charging",
+        {
+            "device_id": list(dr.async_get(hass).devices)[0],
+        },
+        blocking=True,
+    )
+
+    client.update_price_based_charging_settings.assert_not_called()
+
+
+async def test_update_price_based_charging_action(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    price_based_charging_charge_point: dict[str, Any],
+) -> None:
+    """Test the set price based charging action."""
+    integration = await init_integration(
+        hass, config_entry, Platform.BUTTON, [price_based_charging_charge_point]
+    )
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "update_price_based_charging",
+        {
+            "device_id": list(dr.async_get(hass).devices)[0],
+            "expected_departure_time": "14:00",
+            "current_percentage": 20,
+        },
+        blocking=True,
+    )
+
+    client.update_price_based_charging_settings.assert_called_once_with(
+        evse_id="101", expected_departure_time="14:00", current_battery_percentage=20
+    )
+
+
+async def test_update_price_based_charging_action_without_parameters(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    price_based_charging_charge_point: dict[str, Any],
+) -> None:
+    """Test the set price based charging action."""
+    integration = await init_integration(
+        hass, config_entry, Platform.BUTTON, [price_based_charging_charge_point]
+    )
+    client = integration[0]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "update_price_based_charging",
+        {
+            "device_id": list(dr.async_get(hass).devices)[0],
+        },
+        blocking=True,
+    )
+
+    client.update_price_based_charging_settings.assert_not_called()
+
+
 async def test_set_delayed_charging_action(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
