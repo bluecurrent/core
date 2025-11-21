@@ -197,8 +197,8 @@
       "description": "Change the current smart charging profile to Delayed Charging.",
       "fields": {
         "days": {
-          "description": "",
-          "name": "Days that price based charging is activated."
+          "description": "Days that price based charging is activated.",
+          "name": "Days"
         },
         "device_id": {
           "description": "The ID of the Blue Current charge point.",
@@ -281,7 +281,7 @@
       "description": "Update the expected departure time and current battery percentage for the vehicle that is using price based charging.",
       "fields": {
         "current_percentage": {
-          "description": "",
+          "description": "The current battery percentage of the charging vehicle.",
           "name": "Current battery percentage"
         },
         "device_id": {
@@ -289,7 +289,7 @@
           "name": "Device ID"
         },
         "expected_departure_time": {
-          "description": "",
+          "description": "Expected departure time when you want to leave.",
           "name": "Expected departure time"
         }
       },
