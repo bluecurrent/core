@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -263,6 +266,18 @@ class ChargePointSensor(ChargepointEntity, SensorEntity):
 
         else:
             self.has_value = False
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Add extra state attributes."""
+        return {
+            "Transactions": [
+                {"Test": "Test"},
+                {"Test": "Test2!!"},
+                {"Test": "Test3!!"},
+                {"Test": "Test4!!"},
+            ]
+        }
 
 
 class ChargePointTimestampSensor(ChargePointSensor):
